@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To The Mars Tools Learning (Clean Dynamic State)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        h1, h2, h3, .font-display { font-family: 'Fredoka', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .bento-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 20px -4px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ==========================================
+        // 1. DATABASE LENGKAP 25 SOAL PER SUBJEK (GRADE 1-2)
+        // ==========================================
+        const dbQuestions = {
+            math: [
+                { id: "m1", category: "Pola Bilangan (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Katak melompat ke daun nomor 2, lalu daun nomor 5, lalu daun nomor 8. Daun nomor berapa yang akan diinjak katak selanjutnya?", options: ["10", "11", "12", "13"], correct: 1, explanation: "Polanya selalu ditambah 3 (+3). Maka 8 + 3 = 11." },
+                { id: "m2", category: "Pemecahan Masalah (KMNR)", difficulty: "STANDARD", reasoning: "R4", question: "Di dalam sebuah kandang terdapat ayam dan kambing. Total jumlah kepala ada 10, total kaki ada 28. Berapa jumlah kambing di dalam kandang tersebut?", options: ["3 ekor", "4 ekor", "5 ekor", "6 ekor"], correct: 1, explanation: "Misal semua ayam: 10 x 2 = 20 kaki. Selisih 8 kaki milik kambing ekstra (4-2). Jadi 8/2 = 4 ekor." },
+                { id: "m3", category: "Visual Spasial (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Sebuah kubus kayu dicat merah di seluruh luarnya. Jika kubus itu dibelah dua sama besar menjadi 2 balok, berapa banyak sisi baru yang TIDAK berwarna merah?", options: ["1 sisi", "2 sisi", "3 sisi", "4 sisi"], correct: 1, explanation: "Saat dibelah, masing-masing balok memiliki 1 sisi potongan di bagian dalam (total 2 sisi)." },
+                { id: "m4", category: "Aritmetika (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Jika A + B = 10, dan A - B = 4. Maka berapakah nilai A x B?", options: ["21", "24", "16", "25"], correct: 0, explanation: "Angka tersebut adalah A = 7 dan B = 3. Maka A x B = 7 x 3 = 21." },
+                { id: "m5", category: "Waktu/Umur (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Umur Andi 3 tahun lebih tua dari Budi. Umur Ria 2 tahun lebih muda dari Budi. Jika umur Ria 7 tahun, berapakah umur Andi?", options: ["10 tahun", "11 tahun", "12 tahun", "13 tahun"], correct: 2, explanation: "Budi = 7 + 2 = 9 tahun. Andi = 9 + 3 = 12 tahun." },
+                { id: "m6", category: "Deret (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Lanjutkan pola berikut: 1, 3, 6, 10, ...", options: ["12", "14", "15", "16"], correct: 2, explanation: "Penambahan naik bertahap (+2, +3, +4, +5). Jadi 10 + 5 = 15." },
+                { id: "m7", category: "Geometri (KMNR)", difficulty: "FOUNDATION", reasoning: "R1", question: "Saya adalah bangun datar. Saya tidak punya sudut. Jarak dari titik tengah ke pinggir saya selalu sama. Siapakah saya?", options: ["Persegi", "Segitiga", "Lingkaran", "Oval"], correct: 2, explanation: "Lingkaran tidak memiliki sudut, dan jarak pusat ke sisi selalu sama." },
+                { id: "m8", category: "Berhitung (KMNR)", difficulty: "FOUNDATION", reasoning: "R1", question: "Ibu membeli 2 lusin pensil. Kemudian 5 pensil diberikan kepada adik. Berapa sisa pensil ibu?", options: ["15", "19", "21", "29"], correct: 1, explanation: "2 lusin = 24 pensil. Sisa = 24 - 5 = 19 pensil." },
+                { id: "m9", category: "Logika Posisi (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Dalam sebuah lomba lari, Budi menyalip orang di posisi ke-2. Sekarang Budi berada di posisi ke berapa?", options: ["Ke-1", "Ke-2", "Ke-3", "Terakhir"], correct: 1, explanation: "Menyalip posisi ke-2 berarti mengambil alih tempat ke-2 tersebut." },
+                { id: "m10", category: "Hitung Cepat (KMNR)", difficulty: "STANDARD", reasoning: "R2", question: "Berapa hasil dari 10 + 10 x 0 + 10?", options: ["0", "10", "20", "30"], correct: 2, explanation: "Perkalian dikerjakan dulu: 10 x 0 = 0. Lalu 10 + 0 + 10 = 20." },
+                { id: "m11", category: "Analisa Usia (KMNR)", difficulty: "ADVANCED", reasoning: "R4", question: "Tahun ini, jumlah umur ayah dan ibu adalah 70 tahun. Berapa jumlah umur mereka berdua pada 3 tahun yang lalu?", options: ["64 tahun", "67 tahun", "76 tahun", "65 tahun"], correct: 0, explanation: "Total pengurangan = 3 + 3 = 6 tahun. Maka 70 - 6 = 64 tahun." },
+                { id: "m12", category: "Satuan Berat (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "2 kilogram + 500 gram = ... gram", options: ["250", "2500", "700", "20500"], correct: 1, explanation: "2 kg = 2000 gram. 2000 + 500 = 2500 gram." },
+                { id: "m13", category: "Pecahan (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Sebuah pizza dipotong 8 bagian sama besar. Andi memakan 2 potong dan Budi memakan 3 potong. Sisa pizza tersebut adalah ...", options: ["2/8", "3/8", "4/8", "5/8"], correct: 1, explanation: "Total dimakan = 5 potong. Sisa = 8 - 5 = 3 potong (3/8 bagian)." },
+                { id: "m14", category: "Uang (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Nala memiliki uang Rp20.000. Ia membeli buku seharga Rp8.500 dan pensil Rp3.000. Berapa uang kembalian Nala?", options: ["Rp7.500", "Rp8.500", "Rp9.500", "Rp11.500"], correct: 1, explanation: "Belanja = 11.500. Kembalian = 20.000 - 11.500 = Rp8.500." },
+                { id: "m15", category: "Kombinasi (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Nala memiliki 3 kemeja berbeda dan 2 celana berbeda. Ada berapa banyak cara berbeda Nala memasangkan pakaian tersebut?", options: ["3 cara", "5 cara", "6 cara", "9 cara"], correct: 2, explanation: "3 kemeja x 2 celana = 6 cara." },
+                { id: "m16", category: "Jarak (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Rumah Ria ke sekolah jaraknya 2 km. Ria berangkat naik sepeda sejauh 1500 meter, lalu jalan kaki. Berapa meter Ria berjalan kaki?", options: ["500 meter", "1000 meter", "150 meter", "50 meter"], correct: 0, explanation: "2 km = 2000 meter. 2000 - 1500 = 500 meter." },
+                { id: "m17", category: "Waktu (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Film dimulai pukul 14:15 dan berdurasi 1 jam 30 menit. Pukul berapa film tersebut selesai?", options: ["15:30", "15:45", "16:00", "16:15"], correct: 1, explanation: "14:15 + 1 jam 30 menit = 15:45." },
+                { id: "m18", category: "Angka Rahasia (KMNR)", difficulty: "STANDARD", reasoning: "R4", question: "Saya adalah angka ganjil antara 10 dan 20. Jika saya dibagi 3, tidak ada sisa. Siapakah saya?", options: ["12", "15", "18", "21"], correct: 1, explanation: "Angka ganjil antara 10-20 yang habis dibagi 3 adalah 15." },
+                { id: "m19", category: "Tinggi Benda (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Tiang A tingginya 120 cm. Tiang B lebih tinggi 45 cm dari tiang A. Berapa tinggi tiang B?", options: ["75 cm", "155 cm", "165 cm", "265 cm"], correct: 2, explanation: "120 + 45 = 165 cm." },
+                { id: "m20", category: "Kalender (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Jika hari ini adalah hari Rabu, hari apakah 10 hari lagi dari sekarang?", options: ["Jumat", "Sabtu", "Minggu", "Senin"], correct: 1, explanation: "Rabu + 3 hari = Sabtu." },
+                { id: "m21", category: "Deret Huruf (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Perhatikan pola ini: A, C, E, G, ... Huruf apa selanjutnya?", options: ["H", "I", "J", "K"], correct: 1, hint: "Meloncat 1 huruf.", explanation: "A (B) C (D) E (F) G (H) I." },
+                { id: "m22", category: "Analisa Ruang (KMNR)", difficulty: "ADVANCED", reasoning: "R4", question: "Sebuah meja persegi panjang dipotong salah satu pojoknya. Berapa jumlah sudut meja sekarang?", options: ["3", "4", "5", "6"], correct: 2, explanation: "4 - 1 + 2 = 5 sudut." },
+                { id: "m23", category: "Timbangan (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "2 buah apel sama dengan 6 buah stroberi. Maka 1 buah apel sama beratnya dengan ... stroberi.", options: ["2", "3", "4", "12"], correct: 1, explanation: "6 / 2 = 3 stroberi." },
+                { id: "m24", category: "Aritmetika (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Setengah dari angka 50 ditambahkan dengan 15. Berapakah hasilnya?", options: ["30", "40", "45", "65"], correct: 1, explanation: "25 + 15 = 40." },
+                { id: "m25", category: "Umur Pohon (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Pohon mangga ditanam tahun 2010. Pada tahun berapakah pohon tersebut berumur tepat 1,5 dekade?", options: ["2020", "2025", "2030", "2035"], correct: 1, explanation: "1,5 dekade = 15 tahun. 2010 + 15 = 2025." }
+            ],
+            science: [
+                { id: "s1", category: "Bagian Tumbuhan", difficulty: "FOUNDATION", reasoning: "R2", question: "Ria melihat kerajinan anyaman dinding dari bambu. Bagian bambu yang digunakan adalah ...", options: ["akar", "batang", "daun", "bunga"], correct: 1, explanation: "Anyaman bambu dibuat dari batangnya." },
+                { id: "s2", category: "Tubuh Manusia", difficulty: "STANDARD", reasoning: "R2", question: "Nala mengikuti lomba tarik tambang. Bagian tubuh yang harus dilatih agar menang adalah ...", options: ["kepala dan kaki", "tangan dan kaki", "badan dan leher", "mata dan telinga"], correct: 1, explanation: "Tangan menarik, kaki sebagai tumpuan." },
+                { id: "s3", category: "Manfaat Hewan", difficulty: "FOUNDATION", reasoning: "R1", question: "Hewan yang dimanfaatkan dagingnya, susunya, dan tenaganya untuk membajak sawah adalah ...", options: ["rusa", "kambing", "sapi", "ayam"], correct: 2, explanation: "Sapi." },
+                { id: "s4", category: "Lingkungan", difficulty: "STANDARD", reasoning: "R3", question: "Ria melihat temannya membuang plastik ke kolam ikan. Apa yang sebaiknya dilakukan?", options: ["Menertawakan", "Diam saja", "Menegur dengan sopan dan mengajak membuang sampah pada tempatnya", "Ikut membuang sampah"], correct: 2, explanation: "Menegur dengan sopan adalah tindakan menjaga lingkungan terbaik." },
+                { id: "s5", category: "Konservasi Air", difficulty: "FOUNDATION", reasoning: "R2", question: "Nala melihat keran air sekolah menyala hingga siang. Tindakan yang tepat adalah ...", options: ["melaporkan ke guru", "menutup keran tersebut agar air tidak terbuang", "membiarkannya", "bermain air"], correct: 1, explanation: "Menutup keran langsung menghentikan pemborosan." },
+                { id: "s6", category: "Habitat Tumbuhan", difficulty: "FOUNDATION", reasoning: "R1", question: "Di manakah tumbuhan kaktus biasanya tumbuh?", options: ["Sungai", "Hutan", "Gurun", "Laut"], correct: 2, explanation: "Kaktus tumbuh di gurun." },
+                { id: "s7", category: "Kesehatan Tubuh", difficulty: "STANDARD", reasoning: "R2", question: "Ria mengalami susah buang air besar. Dokter menyarankan makanan tinggi serat seperti ...", options: ["Burger", "Sayur", "Mie", "Permen"], correct: 1, explanation: "Sayur kaya serat." },
+                { id: "s8", category: "Peduli Lingkungan", difficulty: "STANDARD", reasoning: "R3", question: "Mengapa kita tidak boleh menghambur-hamburkan makanan?", options: ["Karena mahal", "Bikin kotor", "Meningkatkan sampah dan membuang energi", "Dimarahi teman"], correct: 2, explanation: "Sisa makanan menumpuk jadi sampah." },
+                { id: "s9", category: "Sumber Energi", difficulty: "STANDARD", reasoning: "R3", question: "1. Kertas bergerak ditiup angin. 2. Anak berlari pakai energi makanan. Peristiwa sumber energi gerak adalah ...", options: ["1 dan 2", "1 saja", "2 saja", "Tidak ada"], correct: 0, explanation: "Keduanya sumber energi gerak." },
+                { id: "s10", category: "Tata Surya", difficulty: "FOUNDATION", reasoning: "R2", question: "Peristiwa yang kurang tepat jika cahaya matahari tidak sampai ke bumi adalah ...", options: ["hewan kehilangan tempat", "bumi jadi sangat dingin", "tumbuhan sulit tumbuh", "bumi menjadi terang benderang"], correct: 3, explanation: "Tanpa matahari bumi akan gelap." },
+                { id: "s11", category: "Sifat Benda", difficulty: "STANDARD", reasoning: "R3", question: "Mengapa stoples kaca pecah saat jatuh, sedangkan botol plastik hanya penyok?", options: ["Kaca lebih ringan", "Kaca kuat", "Kaca bersifat rapuh, plastik lentur", "Plastik lebih berat"], correct: 2, explanation: "Kaca getas, plastik lentur." },
+                { id: "s12", category: "Perubahan Benda", difficulty: "FOUNDATION", reasoning: "R2", question: "Apa yang terjadi pada lilin mainan (plastisin) saat dibentuk-bentuk?", options: ["Hanya berubah sekali", "Berubah warna", "Berubah bentuk, tapi bisa dibentuk kembali", "Langsung mencair"], correct: 2, explanation: "Plastisin bisa dibentuk berulang." },
+                { id: "s13", category: "Cuaca", difficulty: "FOUNDATION", reasoning: "R2", question: "Jika cuaca cerah, kegiatan yang paling tepat dilakukan adalah ...", options: ["Memakai jaket tebal", "Mencuci dan menjemur pakaian", "Memakai jas hujan", "Bermain air"], correct: 1, explanation: "Matahari mengeringkan pakaian." },
+                { id: "s14", category: "Kebutuhan Tubuh", difficulty: "FOUNDATION", reasoning: "R1", question: "Andi segar di pagi hari karena malamnya sudah ... dengan cukup.", options: ["istirahat/tidur", "mandi", "sikat gigi", "bermain"], correct: 0, explanation: "Tidur memulihkan energi." },
+                { id: "s15", category: "Tumbuhan", difficulty: "FOUNDATION", reasoning: "R1", question: "Tumbuhan yang bagian umbinya di tanah dimanfaatkan untuk makanan adalah ...", options: ["Kaktus", "Bunga", "Kentang", "Putri Malu"], correct: 2, explanation: "Kentang." },
+                { id: "s16", category: "Benda Langit", difficulty: "FOUNDATION", reasoning: "R1", question: "Benda langit yang memantulkan cahaya matahari dan tampak terang di malam hari adalah ...", options: ["Awan", "Bulan", "Bintang fajar", "Pelangi"], correct: 1, explanation: "Bulan." },
+                { id: "s17", category: "Panca Indera", difficulty: "FOUNDATION", reasoning: "R1", question: "Nala mendengarkan lagu dari radio menggunakan ...", options: ["rambut", "telinga", "mulut", "mata"], correct: 1, explanation: "Telinga." },
+                { id: "s18", category: "Wujud Benda", difficulty: "FOUNDATION", reasoning: "R2", question: "Es krim dibiarkan terbuka berubah jadi air. Peristiwa ini disebut ...", options: ["membeku", "mencair", "menguap", "menyublim"], correct: 1, explanation: "Mencair." },
+                { id: "s19", category: "Alat Sekolah", difficulty: "FOUNDATION", reasoning: "R1", question: "Guru menulis di ... menggunakan ...", options: ["papan tulis; spidol", "buku; kapur", "meja; pulpen", "dinding; pensil"], correct: 0, explanation: "Papan tulis dan spidol." },
+                { id: "s20", category: "Ciri Benda", question: "Benda cair yang dipindah dari botol ke gelas bentuknya mengikuti gelas, contohnya ...", options: ["padat; tanah liat", "cair; jus jeruk", "gas; kapas", "cair; kelereng"], correct: 1, explanation: "Jus jeruk." },
+                { id: "s21", category: "Gaya & Gerak", difficulty: "FOUNDATION", reasoning: "R2", question: "Bola bowling menggelinding ke pin karena diberi ... oleh pemain.", options: ["dorongan/lemparan", "pegangan", "tendangan", "tiupan"], correct: 0, explanation: "Gaya dorong." },
+                { id: "s22", category: "Kebersihan", difficulty: "FOUNDATION", reasoning: "R1", question: "Cara menjaga lingkungan rumah agar tetap bersih adalah ...", options: ["Mencabut bunga", "Membakar daun", "Membuang sampah pada tempatnya", "Membuang sampah ke sungai"], correct: 2, explanation: "Membuang sampah pada tempatnya." },
+                { id: "s23", category: "Hewan", difficulty: "FOUNDATION", reasoning: "R1", question: "Untuk melindungi tubuhnya, koala dan kanguru ditumbuhi ...", options: ["bulu burung", "rambut/bulu halus", "sisik", "cangkang"], correct: 1, explanation: "Rambut/bulu halus." },
+                { id: "s24", category: "Sifat Air & Angin", difficulty: "FOUNDATION", reasoning: "R2", question: "Perahu layar dapat bergerak di laut karena ...", options: ["Angin mendorong layar", "Gelombang tenang", "Jangkar di dasar", "Baling-baling"], correct: 0, explanation: "Angin." },
+                { id: "s25", category: "Musim", difficulty: "FOUNDATION", reasoning: "R1", question: "Ciri-ciri musim kemarau di Indonesia adalah ...", options: ["Hujan tinggi dan banjir", "Cuaca panas, tanah kering, jarang hujan", "Salju lebat", "Daun gugur di salju"], correct: 1, explanation: "Cuaca panas dan jarang hujan." }
+            ],
+            english: [
+                { id: "e1", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "A baby elephant is known as a .............", options: ["Puppy", "Calf", "Kitten", "Cub"], correct: 1, explanation: "A calf." },
+                { id: "e2", category: "Grammar (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The weather is great - it is really .............", options: ["Suny", "Sunny", "Sunshine", "Sunn"], correct: 1, explanation: "'Sunny'." },
+                { id: "e3", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "You need an ............. when it rains.", options: ["coat", "umbrela", "jumper", "umbrella"], correct: 3, explanation: "'umbrella'." },
+                { id: "e4", category: "Prepositions (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "A: Where do you live?\nB: I live ............. a big house.", options: ["on", "in", "under", "at"], correct: 1, explanation: "'in'." },
+                { id: "e5", category: "Grammar (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "Andi has got blue .............", options: ["trosers", "trausers", "trousers", "trouser"], correct: 2, explanation: "'trousers'." },
+                { id: "e6", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "A place of worship is called a .............", options: ["temple", "curch", "mosque", "church"], correct: 3, explanation: "'church'." },
+                { id: "e7", category: "Profession (EF)", difficulty: "FOUNDATION", reasoning: "R2", question: "He is a postman. He ............. letters everyday.", options: ["delivers", "mails", "puts", "writes"], correct: 0, explanation: "delivers." },
+                { id: "e8", category: "Vocabulary (EF)", difficulty: "FOUNDATION", reasoning: "R2", question: "Ria is asleep. Don't ............. her up.", options: ["wait", "wear", "weak", "wake"], correct: 3, explanation: "wake." },
+                { id: "e9", category: "Vocabulary (EF)", difficulty: "FOUNDATION", reasoning: "R1", question: "Ria wears an accessory on her ears. It is called .............", options: ["ring", "bracelet", "brooch", "earring"], correct: 3, explanation: "earring." },
+                { id: "e10", category: "Phrasal Verbs (EF)", difficulty: "FOUNDATION", reasoning: "R2", question: "It is hot in the room. Let's ............. the fan.", options: ["turn off", "open", "turn on", "close"], correct: 2, explanation: "turn on." },
+                { id: "e11", category: "Time (EF)", difficulty: "STANDARD", reasoning: "R3", question: "He goes to school at a quarter to six. What time is it?", options: ["05:15", "06:15", "05:45", "06:45"], correct: 2, explanation: "05:45." },
+                { id: "e12", category: "Context", difficulty: "STANDARD", reasoning: "R3", question: "I am yellow. I am a fruit. Monkeys love to eat me. What am I?", options: ["An apple", "A banana", "A lemon", "A watermelon"], correct: 1, explanation: "A banana." },
+                { id: "e13", category: "Prepositions (EF)", difficulty: "FOUNDATION", reasoning: "R2", question: "The cat is hiding ___ the bed because it is scared.", options: ["on", "under", "above", "in front of"], correct: 1, explanation: "under." },
+                { id: "e14", category: "Grammar", difficulty: "STANDARD", reasoning: "R2", question: "Look! The birds ___ in the sky.", options: ["is flying", "are flying", "flying", "flies"], correct: 1, explanation: "are flying." },
+                { id: "e15", category: "Phrases (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "Can you ............. me a favor?", options: ["help", "make", "ask", "do"], correct: 3, explanation: "do." },
+                { id: "e16", category: "Grammar (IKLC)", difficulty: "STANDARD", reasoning: "R2", question: "Complete the sentence: There ............. some wild flowers.", options: ["is", "have", "are", "was"], correct: 2, explanation: "are." },
+                { id: "e17", category: "Grammar (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "I see with my two black .............", options: ["eyes", "ears", "noses", "hands"], correct: 0, explanation: "eyes." },
+                { id: "e18", category: "Questions (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Shopper: '............. is a kilo of these apples?'\nSeller: 'Ten-thousand rupiahs.'", options: ["How many", "What", "How much", "How"], correct: 2, explanation: "How much." },
+                { id: "e19", category: "Vocabulary (EF)", difficulty: "FOUNDATION", reasoning: "R1", question: "Ria is sleeping in the bedroom with her .............", options: ["pillow, bolster, and door mat", "refrigerator, pillow, and blanket", "pillow, doll, and blanket", "bolster, blanket, and ashtray"], correct: 2, explanation: "Pillow, doll, and blanket." },
+                { id: "e20", category: "Greeting (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Mimi: 'Budi, this is Nala.'\nBudi: 'Hi, Nala. How do you do?'\nNala: '.............'", options: ["Are you all right?", "How do you do?", "How are you?", "Thank you very much"], correct: 1, explanation: "How do you do?" },
+                { id: "e21", category: "Vocabulary", difficulty: "FOUNDATION", reasoning: "R1", question: "The king's daughter is a .............", options: ["son", "prince", "queen", "princess"], correct: 3, explanation: "princess." },
+                { id: "e22", category: "Adjectives", difficulty: "FOUNDATION", reasoning: "R1", question: "A dog that is white in color is a .............", options: ["white dog", "black dog", "red dog", "brown dog"], correct: 0, explanation: "white dog." },
+                { id: "e23", category: "Opposites", difficulty: "FOUNDATION", reasoning: "R1", question: "The opposite of 'tall' is .............", options: ["big", "long", "short", "fat"], correct: 2, explanation: "short." },
+                { id: "e24", category: "Family", difficulty: "FOUNDATION", reasoning: "R1", question: "My father's brother is my .............", options: ["uncle", "aunt", "cousin", "grandfather"], correct: 0, explanation: "uncle." },
+                { id: "e25", category: "Senses", category: "FOUNDATION", reasoning: "R1", question: "We use our ............. to smell the apples.", options: ["eyes", "ears", "nose", "mouth"], correct: 2, explanation: "nose." }
+            ]
+        };
+
+        // ==========================================
+        // 2. ALGORITMA DINAMIS VARIANT KUIS AQSA
+        // ==========================================
+        const generateDynamicQuiz = (subjectKey) => {
+            const namesM = ["Andi", "Budi", "Dodi", "Edo", "Fandi"];
+            const namesF = ["Ria", "Siti", "Nala", "Lina", "Tini"];
+            const fruitsID = ["apel", "jeruk", "mangga", "pisang", "stroberi"];
+            const fruitsEN = ["apples", "oranges", "mangoes", "bananas", "grapes"];
+            
+            let originalQuestions = dbQuestions[subjectKey] || dbQuestions.math;
+            let selectedQuestions = [];
+
+            originalQuestions.forEach(q => {
+                let v = Math.floor(Math.random() * 5);
+                let newQ = JSON.parse(JSON.stringify(q));
+                
+                if (v > 0) {
+                    let replaceText = (text) => {
+                        if(!text) return text;
+                        return text.replace(/Andi/g, namesM[v]).replace(/Budi/g, namesM[(v+1)%5])
+                                   .replace(/Ria/g, namesF[v]).replace(/Nala/g, namesF[(v+1)%5])
+                                   .replace(/apples/g, fruitsEN[v]).replace(/apel/g, fruitsID[v]);
+                    };
+                    newQ.question = replaceText(newQ.question);
+                    newQ.explanation = replaceText(newQ.explanation);
+                    newQ.options = newQ.options.map(opt => replaceText(opt));
+                }
+                
+                let optsWithIndex = newQ.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
+                optsWithIndex.sort(() => Math.random() - 0.5);
+                let newCorrectIndex = optsWithIndex.findIndex(opt => opt.originalIndex === newQ.correct);
+                
+                newQ.options = optsWithIndex.map(opt => opt.text);
+                newQ.correct = newCorrectIndex;
+                selectedQuestions.push(newQ);
+            });
+            
+            selectedQuestions.sort(() => Math.random() - 0.5);
+            return selectedQuestions;
+        };
+
+        // ==========================================
+        // 3. LEARNING MODULE (Fase 9)
+        // ==========================================
+        const LearningModule = ({ onComplete, onExit }) => {
+            const [step, setStep] = useState(0);
+            const [selectedOpt, setSelectedOpt] = useState(null);
+            const [feedback, setFeedback] = useState(null);
+
+            const steps = [
+                {
+                    type: 'CONCEPT',
+                    title: 'Memahami Pola Bilangan',
+                    content: 'Pola adalah urutan yang berulang atau memiliki aturan yang sama secara terus-menerus.',
+                    visual: '🍎 🍌 🍎 🍌 🍎 ...',
+                    instruction: 'Apa buah selanjutnya? Ya, pisang! Karena aturannya bergantian.'
+                },
+                {
+                    type: 'GUIDED PRACTICE',
+                    title: 'Latihan Terbimbing',
+                    question: 'Lihat angka ini: 2, 4, 6, 8, ... \nApa angka selanjutnya?',
+                    options: ['9', '10', '12'],
+                    correct: 1,
+                    hint: 'Coba hitung jarak dari 2 ke 4. Ditambah 2 setiap loncatan.'
+                },
+                {
+                    type: 'CHECKPOINT',
+                    title: 'Tantangan Penguasaan',
+                    question: 'Katak melompat ke angka 5, lalu 10, lalu 15. Angka berapa setelahnya?',
+                    options: ['16', '18', '20'],
+                    correct: 2,
+                    hint: 'Kelipatan 5 berurutan.'
+                }
+            ];
+
+            const handleOptionClick = (idx) => {
+                setSelectedOpt(idx);
+                const currentStep = steps[step];
+                
+                if (idx === currentStep.correct) {
+                    setFeedback({ type: 'success', text: 'Tepat sekali! Luar biasa!' });
+                    setTimeout(() => {
+                        setFeedback(null);
+                        setSelectedOpt(null);
+                        if (step < steps.length - 1) setStep(step + 1);
+                        else {
+                            confetti({ particleCount: 100, spread: 70 });
+                            onComplete();
+                        }
+                    }, 1500);
+                } else {
+                    setFeedback({ type: 'hint', text: currentStep.hint });
+                }
+            };
+
+            const current = steps[step];
+
+            return (
+                <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 fade-in">
+                    <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col min-h-[500px]">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                            <button onClick={onExit} className="text-slate-400 hover:text-slate-600 font-bold text-sm"><i data-lucide="x" className="w-5 h-5"></i></button>
+                            <div className="flex gap-2">
+                                {[0, 1, 2].map(i => (
+                                    <div key={i} className={`h-2 rounded-full transition-all duration-500 ${i <= step ? 'w-8 bg-blue-500' : 'w-4 bg-slate-200'}`}></div>
+                                ))}
+                            </div>
+                            <span className="text-xs font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">{current.type}</span>
+                        </div>
+                        <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
+                            <h2 className="text-2xl font-display font-bold text-slate-800 mb-6">{current.title}</h2>
+                            {current.type === 'CONCEPT' ? (
+                                <div className="space-y-6 slide-up">
+                                    <p className="text-lg text-slate-600 font-medium">{current.content}</p>
+                                    <div className="text-5xl tracking-widest bg-slate-50 py-6 rounded-3xl border border-slate-100">{current.visual}</div>
+                                    <p className="text-emerald-600 font-bold">{current.instruction}</p>
+                                    <button onClick={() => setStep(1)} className="mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-2xl shadow-lg">Mulai Latihan</button>
+                                </div>
+                            ) : (
+                                <div className="w-full max-w-md slide-up">
+                                    <p className="text-xl text-slate-800 font-medium mb-8 whitespace-pre-line">{current.question}</p>
+                                    <div className="space-y-3">
+                                        {current.options.map((opt, idx) => (
+                                            <button key={idx} onClick={() => handleOptionClick(idx)}
+                                                className={`w-full p-4 rounded-2xl border-2 text-lg font-bold transition-all ${
+                                                    selectedOpt === idx && feedback?.type === 'hint' ? 'border-red-300 bg-red-50 text-red-700' :
+                                                    selectedOpt === idx && feedback?.type === 'success' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' :
+                                                    'border-slate-200 hover:border-blue-400 bg-white text-slate-700'
+                                                }`}>
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {feedback && (
+                                        <div className={`mt-6 p-4 rounded-xl font-bold text-sm fade-in flex items-center justify-center gap-2 ${feedback.type === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>
+                                            <i data-lucide={feedback.type === 'success' ? 'check-circle' : 'lightbulb'} className="w-5 h-5"></i>
+                                            {feedback.text}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 4. QUIZ ENGINE (Assessment Engine)
+        // ==========================================
+        const QuizEngine = ({ subject, onComplete, onExit }) => {
+            const [questions, setQuestions] = useState([]);
+            const [currentIdx, setCurrentIdx] = useState(0);
+            const [answers, setAnswers] = useState({});
+            const [isFinished, setIsFinished] = useState(false);
+            const [results, setResults] = useState(null);
+
+            useEffect(() => {
+                setQuestions(generateDynamicQuiz(subject));
+                setTimeout(() => lucide.createIcons(), 50);
+            }, [subject]);
+
+            const handleAnswer = (optIdx) => {
+                setAnswers(prev => ({ ...prev, [currentIdx]: optIdx }));
+                if (currentIdx < questions.length - 1) {
+                    setTimeout(() => setCurrentIdx(currentIdx + 1), 300);
+                }
+            };
+
+            const finishQuiz = () => {
+                let correct = 0;
+                questions.forEach((q, idx) => {
+                    if (answers[idx] === q.correct) correct++;
+                });
+                
+                let score = Math.round((correct / questions.length) * 100);
+                let strength = score > 50 ? "Pemahaman Dasar Kuat" : "Kecepatan Analisis";
+                let weakness = score < 100 ? "Soal Penalaran Non-Rutin (R4)" : "Tidak ada";
+                
+                const finalResultData = { score, correct, total: questions.length, strength, weakness, subject };
+                
+                // Simpan ke localStorage agar Dashboard langsung terupdate secara real
+                const existingHistory = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
+                existingHistory.push(finalResultData);
+                localStorage.setItem('aqsa_quiz_history', JSON.stringify(existingHistory));
+
+                setResults(finalResultData);
+                setIsFinished(true);
+                confetti({ particleCount: 120, spread: 80 });
+            };
+
+            if (questions.length === 0) return <div className="p-8 text-center font-bold text-slate-500">Menyiapkan 25 soal dinamis...</div>;
+
+            if (isFinished) {
+                return (
+                    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 fade-in">
+                        <div className="bg-white max-w-2xl w-full rounded-[2rem] shadow-xl p-8 border border-slate-100 text-center">
+                            <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-4">
+                                <i data-lucide="award" className="w-10 h-10 text-emerald-600"></i>
+                            </div>
+                            <h2 className="text-3xl font-display font-bold text-slate-800 mb-2">Evaluasi Selesai!</h2>
+                            <p className="text-slate-500 mb-8">Hasil kinerjamu telah direkam ke dalam sistem analitik.</p>
+                            
+                            <div className="grid grid-cols-3 gap-4 mb-8">
+                                <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                    <span className="text-xs font-bold text-blue-500 uppercase">Skor</span>
+                                    <div className="text-3xl font-black text-blue-700">{results.score}</div>
+                                </div>
+                                <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                                    <span className="text-xs font-bold text-emerald-500 uppercase">Benar</span>
+                                    <div className="text-3xl font-black text-emerald-700">{results.correct} / {results.total}</div>
+                                </div>
+                                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                                    <span className="text-xs font-bold text-amber-500 uppercase">Akurasi</span>
+                                    <div className="text-3xl font-black text-amber-700">{results.score}%</div>
+                                </div>
+                            </div>
+
+                            <button onClick={onComplete} className="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-900 transition-colors">Kembali ke Dashboard</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const q = questions[currentIdx];
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex flex-col">
+                    <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0">
+                        <div className="flex items-center gap-3">
+                            <button onClick={onExit} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><i data-lucide="x" className="w-4 h-4"></i></button>
+                            <span className="font-bold text-slate-700">{subject.toUpperCase()} Evaluation (25 Soal)</span>
+                        </div>
+                        <div className="font-mono font-bold bg-slate-100 px-4 py-2 rounded-lg text-slate-600">Soal {currentIdx + 1} / {questions.length}</div>
+                    </header>
+                    <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center slide-up">
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
+                            <div className="flex gap-2 mb-6">
+                                <span className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 text-slate-500 rounded uppercase">{q.category}</span>
+                                <span className="text-[10px] font-bold px-2.5 py-1 bg-purple-50 text-purple-600 rounded uppercase border border-purple-100">{q.reasoning}</span>
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-8 leading-relaxed">{q.question}</h2>
+                            <div className="space-y-3">
+                                {q.options.map((opt, idx) => (
+                                    <button key={idx} onClick={() => handleAnswer(idx)}
+                                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all group flex items-start gap-4 ${answers[currentIdx] === idx ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
+                                        <div className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center mt-0.5 ${answers[currentIdx] === idx ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
+                                            {answers[currentIdx] === idx && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                                        </div>
+                                        <span className={`text-base font-medium ${answers[currentIdx] === idx ? 'text-blue-900' : 'text-slate-700'}`}>{opt}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-between">
+                            <button onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0} className="px-6 py-3 font-bold text-slate-600 disabled:opacity-50">Sebelumnya</button>
+                            {currentIdx === questions.length - 1 ? (
+                                <button onClick={finishQuiz} className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg hover:bg-emerald-700">Selesai Ujian</button>
+                            ) : (
+                                <button onClick={() => setCurrentIdx(currentIdx + 1)} className="px-8 py-3 bg-slate-800 text-white font-bold rounded-2xl shadow-lg hover:bg-slate-900">Selanjutnya</button>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 5. STUDENT DASHBOARD (CLEAN INITIAL STATE)
+        // ==========================================
+        const StudentDashboard = ({ onStartQuiz, onStartLearning, onLogout }) => {
+            const [activeMenu, setActiveMenu] = useState('Dashboard');
+            const history = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
+            const hasCompletedAny = history.length > 0;
+
+            // Jika belum ada riwayat, skor dan penguasaan tampil 0 (Blank)
+            const overallScore = hasCompletedAny ? Math.round(history.reduce((acc, curr) => acc + curr.score, 0) / history.length) : 0;
+            const competencyVals = {
+                math: history.filter(h => h.subject === 'math').length > 0 ? 82 : 0,
+                science: history.filter(h => h.subject === 'science').length > 0 ? 75 : 0,
+                english: history.filter(h => h.subject === 'english').length > 0 ? 90 : 0,
+                logic: 0, biology: 0, grammar: 0
+            };
+            
+            useEffect(() => { lucide.createIcons(); }, [activeMenu, history]);
+
+            const menus = [
+                { id: 'Dashboard', icon: 'layout-dashboard' },
+                { id: 'Lessons', icon: 'book-open' },
+                { id: 'Schedule', icon: 'calendar' },
+                { id: 'Assessments', icon: 'pen-tool' },
+                { id: 'Settings', icon: 'settings' }
+            ];
+
+            return (
+                <div className="min-h-screen bg-[#314a8f] p-2 sm:p-4 md:p-6 flex fade-in">
+                    <div className="bg-white w-full rounded-[2rem] shadow-2xl flex overflow-hidden flex-col lg:flex-row">
+                        
+                        <aside className="w-full lg:w-64 bg-[#3b55a0] text-white p-6 flex flex-col lg:flex-shrink-0">
+                            <div className="flex items-center gap-3 mb-10 text-white font-bold text-xl leading-tight">
+                                <div className="w-9 h-9 bg-white text-[#3b55a0] rounded-xl flex items-center justify-center shadow-inner shrink-0"><i data-lucide="rocket" className="w-5 h-5"></i></div>
+                                <div>
+                                    <div className="text-base font-display">To The Mars</div>
+                                    <div className="text-[9px] text-blue-200 font-medium uppercase tracking-widest">Tools Learning</div>
+                                </div>
+                            </div>
+                            <nav className="space-y-2 flex-1 flex lg:flex-col overflow-x-auto pb-2 lg:pb-0 hide-scrollbar">
+                                {menus.map(menu => (
+                                    <button key={menu.id} onClick={() => setActiveMenu(menu.id)} 
+                                        className={`w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-3
+                                        ${activeMenu === menu.id ? 'bg-white text-[#3b55a0] shadow-md' : 'text-blue-100 hover:bg-white/10'}`}>
+                                        <i data-lucide={menu.icon} className="w-5 h-5"></i>
+                                        {menu.id}
+                                    </button>
+                                ))}
+                            </nav>
+                            <button onClick={onLogout} className="mt-auto hidden lg:flex px-4 py-3 text-left text-blue-200 hover:text-white items-center gap-3 text-sm font-semibold">
+                                <i data-lucide="log-out" className="w-5 h-5"></i> Keluar
+                            </button>
+                        </aside>
+
+                        <main className="flex-1 flex flex-col xl:flex-row overflow-y-auto">
+                            <div className="flex-1 p-6 lg:p-8 border-r border-slate-100 space-y-8">
+                                
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-6 md:p-8 flex items-center justify-between border border-blue-100">
+                                    <div className="relative z-10 w-full max-w-lg">
+                                        <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-800 mb-2">Halo Aqsa! 👋</h1>
+                                        <p className="text-slate-600 text-sm mb-5 leading-relaxed">
+                                            {hasCompletedAny ? `Evaluasi terakhir mendapati skor rata-rata ${overallScore}. Pilih subjek di bawah untuk terus mengasah kemampuanmu!` : "Belum ada riwayat aktivitas. Silakan mulai modul belajar atau pilih evaluasi mandiri di bawah."}
+                                        </p>
+                                        <button onClick={onStartLearning} className="bg-blue-600 text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg hover:bg-blue-700 transition flex items-center gap-2">
+                                            Buka Modul Belajar <i data-lucide="play" className="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bento-card">
+                                        <h3 className="font-bold text-slate-800 mb-6">Tren Evaluasi</h3>
+                                        {hasCompletedAny ? (
+                                            <div className="flex items-end justify-between h-32 pb-2 gap-2">
+                                                {history.map((h, i) => (
+                                                    <div key={i} className="flex flex-col items-center flex-1">
+                                                        <span className="text-[10px] font-bold text-slate-400 mb-1">{h.score}</span>
+                                                        <div className="w-full max-w-[32px] bg-blue-50 rounded-t-lg relative h-full">
+                                                            <div className="absolute bottom-0 w-full bg-blue-500 rounded-t-lg" style={{ height: `${h.score}%` }}></div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="h-32 flex items-center justify-center text-slate-400 text-xs italic border-2 border-dashed border-slate-200 rounded-2xl">
+                                                Belum ada data evaluasi tercatat.
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="bento-card">
+                                        <h3 className="font-bold text-slate-800 mb-4">Penguasaan Kompetensi</h3>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-2">
+                                            {[
+                                                { label: "Logic Math", val: competencyVals.math, color: "#3b82f6" },
+                                                { label: "Number Sense", val: competencyVals.math > 0 ? 85 : 0, color: "#10b981" },
+                                                { label: "Physics (Force)", val: competencyVals.science, color: "#f43f5e" },
+                                                { label: "Biology", val: competencyVals.science > 0 ? 70 : 0, color: "#f59e0b" },
+                                                { label: "Vocabulary", val: competencyVals.english, color: "#8b5cf6" },
+                                                { label: "Grammar", val: competencyVals.english > 0 ? 80 : 0, color: "#ec4899" }
+                                            ].map((item, i) => (
+                                                <div key={i} className="flex flex-col items-center">
+                                                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-2 shadow-sm" style={{ background: `conic-gradient(${item.color} ${item.val}%, #f1f5f9 ${item.val}%)` }}>
+                                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black text-slate-700">{item.val}%</div>
+                                                    </div>
+                                                    <span className="text-[9px] sm:text-[11px] font-bold text-slate-600 text-center">{item.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-bold text-slate-800 mb-4">Mulai Evaluasi Mandiri (25 Soal)</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <button onClick={() => onStartQuiz('math')} className="text-left bg-[#f4f7fc] p-6 rounded-[1.5rem] hover:shadow-lg transition group relative border border-blue-50">
+                                            <div className="w-12 h-12 bg-[#e2eafc] text-blue-700 rounded-xl flex items-center justify-center mb-4"><i data-lucide="calculator" className="w-6 h-6"></i></div>
+                                            <h4 className="text-lg font-display font-bold text-blue-900 mb-1">Nalaria Mathematics</h4>
+                                            <p className="text-xs text-blue-600 font-medium">25 Soal KMNR & Logic</p>
+                                        </button>
+                                        <button onClick={() => onStartQuiz('science')} className="text-left bg-[#eefff4] p-6 rounded-[1.5rem] hover:shadow-lg transition group relative border border-emerald-50">
+                                            <div className="w-12 h-12 bg-[#d1f4e0] text-emerald-700 rounded-xl flex items-center justify-center mb-4"><i data-lucide="flask-conical" className="w-6 h-6"></i></div>
+                                            <h4 className="text-lg font-display font-bold text-emerald-900 mb-1">Realistic Science</h4>
+                                            <p className="text-xs text-emerald-600 font-medium">25 Soal Fenomena Alam</p>
+                                        </button>
+                                        <button onClick={() => onStartQuiz('english')} className="text-left bg-[#fff0f2] p-6 rounded-[1.5rem] hover:shadow-lg transition group relative border border-rose-50">
+                                            <div className="w-12 h-12 bg-[#ffe0e6] text-rose-700 rounded-xl flex items-center justify-center mb-4"><i data-lucide="globe" className="w-6 h-6"></i></div>
+                                            <h4 className="text-lg font-display font-bold text-rose-900 mb-1">English (Cambridge)</h4>
+                                            <p className="text-xs text-rose-600 font-medium">25 Soal IKLC & EF</p>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="w-full xl:w-80 p-6 lg:p-8 bg-slate-50/50">
+                                <div className="bento-card mb-6 bg-white">
+                                    <h3 className="font-bold text-slate-800 mb-5">Jadwal Hari Ini</h3>
+                                    <p className="text-xs text-slate-400 italic">Belum ada tugas terjadwal dari admin.</p>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 6. ADMIN DASHBOARD (CLEAN INITIAL STATE)
+        // ==========================================
+        const AdminDashboard = ({ onLogout }) => {
+            const [activeMenu, setActiveMenu] = useState('Overview');
+            const [genState, setGenState] = useState('FORM');
+            const [formData, setFormData] = useState({ subject: 'Math', reasoning: 'R4', reference: 'KMNR' });
+            const history = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
+            const hasActivity = history.length > 0;
+
+            useEffect(() => { lucide.createIcons(); }, [activeMenu, genState]);
+
+            const handleGenerate = () => {
+                setGenState('GENERATING');
+                setTimeout(() => setGenState('RESULT'), 2000);
+            };
+
+            const AdminOverview = () => (
+                <div className="space-y-6 fade-in">
+                    <header className="mb-6">
+                        <h2 className="text-2xl font-display font-bold text-slate-800">Overview Akademik & Analitik</h2>
+                        <p className="text-sm text-slate-500">Memantau Aqsa (Grade 2, Band A)</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bento-card border-t-4 border-t-blue-500 flex flex-col justify-between">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Mastery Keseluruhan</span>
+                            <div className="mt-2"><span className="text-4xl font-black text-slate-800">{hasActivity ? Math.round(history.reduce((a,c)=>a+c.score,0)/history.length) : '0'}</span><span className="text-slate-500 font-medium">/100</span></div>
+                        </div>
+                        <div className="bento-card border-t-4 border-t-emerald-500 flex flex-col justify-between">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Target (Nov 2026)</span>
+                            <div className="mt-2 text-xl font-bold text-slate-800">Readiness Band A</div>
+                        </div>
+                        <div className="bento-card border-t-4 border-t-purple-500 flex flex-col justify-between">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Profil Reasoning</span>
+                            <div className="mt-2"><span className="text-2xl font-black text-slate-800">{hasActivity ? 'R3' : 'Belum Ada'}</span></div>
+                        </div>
+                        <div className="bento-card border-t-4 border-t-amber-500 flex flex-col justify-between">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Total Sesi Ujian</span>
+                            <div className="mt-2"><span className="text-4xl font-black text-slate-800">{history.length}</span></div>
+                        </div>
+                    </div>
+
+                    <div className="bento-card">
+                        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="target" className="w-5 h-5 text-red-500"></i> Status Gap Kompetensi Siswa</h3>
+                        {hasActivity ? (
+                            <p className="text-sm text-slate-600">Analisis berdasarkan {history.length} tes terakhir menunjukkan perkembangan positif.</p>
+                        ) : (
+                            <div className="p-8 text-center text-slate-400 italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                Belum ada data gap kompetensi. Siswa belum menyelesaikan ujian apapun.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+
+            const AIGeneratorModule = () => (
+                <div className="max-w-4xl mx-auto fade-in">
+                    <header className="mb-8">
+                        <h2 className="text-2xl font-display font-bold text-slate-800">AI Question Generator</h2>
+                        <p className="text-sm text-slate-500">Buat soal HOTS baru berdasarkan Taksonomi To The Mars (Grade 1-2).</p>
+                    </header>
+                    {genState === 'FORM' && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 slide-up">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Subject (Grade 1-2)</label>
+                                    <select value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none font-medium text-slate-700">
+                                        <option value="Math">Mathematics</option>
+                                        <option value="Science">Science</option>
+                                        <option value="English">English</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Topic / Competency (Free Text)</label>
+                                    <input type="text" defaultValue="Pola Bilangan (Number Pattern)" className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none font-medium text-slate-700" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Reasoning Level</label>
+                                    <select value={formData.reasoning} onChange={(e) => setFormData({...formData, reasoning: e.target.value})} className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none font-medium text-slate-700">
+                                        <option value="R1">R1 - Recall</option>
+                                        <option value="R2">R2 - Direct Application</option>
+                                        <option value="R3">R3 - Multi-step</option>
+                                        <option value="R4">R4 - Non-routine (HOTS)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Reference Anchor</label>
+                                    <select value={formData.reference} onChange={(e) => setFormData({...formData, reference: e.target.value})} className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none font-medium text-slate-700">
+                                        <option value="KMNR">KMNR / KPM Style</option>
+                                        <option value="IKMC">IKMC / Kangaroo Style</option>
+                                        <option value="Cambridge">Cambridge Primary</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button onClick={handleGenerate} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                                <i data-lucide="sparkles" className="w-5 h-5"></i> Generate AI Question
+                            </button>
+                        </div>
+                    )}
+                    {genState === 'GENERATING' && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center text-center fade-in">
+                            <i data-lucide="brain-circuit" className="w-16 h-16 text-blue-500 animate-pulse mb-6"></i>
+                            <h3 className="text-xl font-bold text-slate-800 mb-2">AI sedang merakit soal...</h3>
+                            <p className="text-slate-500 text-sm">Menyelaraskan standar {formData.reference} dan level {formData.reasoning}...</p>
+                        </div>
+                    )}
+                    {genState === 'RESULT' && (
+                        <div className="space-y-6 slide-up">
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800 font-bold flex items-center gap-2">
+                                <i data-lucide="check-circle" className="w-5 h-5"></i> Soal berhasil di-generate! Siap dipublish ke Bank Soal.
+                            </div>
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                                <h4 className="font-bold text-slate-800 mb-2">Contoh Hasil AI:</h4>
+                                <p className="text-slate-700 p-4 bg-slate-50 rounded-xl mb-4 font-medium">Di taman ada beberapa kursi. Jika 1 kursi diduduki 2 anak, ada 3 anak berdiri. Berapa jumlah anak?</p>
+                                <div className="flex justify-end gap-3">
+                                    <button onClick={() => setGenState('FORM')} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Batal</button>
+                                    <button onClick={() => setGenState('FORM')} className="px-6 py-3 font-bold text-white bg-slate-800 rounded-xl shadow-md">Publish ke Bank Soal</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+
+            return (
+                <div className="flex min-h-screen bg-slate-100">
+                    <aside className="w-64 bg-slate-900 text-white flex flex-col">
+                        <div className="p-6 border-b border-slate-800">
+                            <h1 className="text-lg font-display font-bold text-blue-400">To The Mars</h1>
+                            <p className="text-[10px] text-slate-400 mt-0.5">Admin & Analytics (Grade 1-2)</p>
+                        </div>
+                        <nav className="flex-1 p-4 space-y-1">
+                            {['Overview', 'AI Generator', 'Question Bank', 'Settings'].map(item => (
+                                <button key={item} onClick={() => setActiveMenu(item)} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition ${activeMenu === item ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                                    {item}
+                                </button>
+                            ))}
+                        </nav>
+                        <div className="p-4 border-t border-slate-800">
+                            <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm text-slate-400 hover:text-white flex items-center gap-2"><i data-lucide="log-out" className="w-4 h-4"></i> Keluar</button>
+                        </div>
+                    </aside>
+                    <main className="flex-1 p-8 overflow-y-auto">
+                        {activeMenu === 'Overview' ? <AdminOverview /> : 
+                         activeMenu === 'AI Generator' ? <AIGeneratorModule /> :
+                         <div className="fade-in text-slate-500 p-8 text-center border-2 border-dashed border-slate-300 rounded-2xl">Modul {activeMenu} aktif (Berdasarkan Blueprint v4.0).</div>}
+                    </main>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 7. MAIN APP ROUTER
+        // ==========================================
+        const App = () => {
+            const [userRole, setUserRole] = useState(null);
+            const [studentView, setStudentView] = useState('DASHBOARD');
+            const [selectedSubject, setSelectedSubject] = useState(null);
+
+            useEffect(() => { lucide.createIcons(); });
+
+            if (!userRole) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] p-4 fade-in">
+                        <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl max-w-md w-full text-center border border-slate-100">
+                            <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white shadow-lg"><i data-lucide="rocket" className="w-8 h-8"></i></div>
+                            <h1 className="text-3xl font-display font-bold text-slate-800 mb-2">To The Mars</h1>
+                            <p className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-10">Tools Learning (v4.0)</p>
+                            <div className="space-y-4">
+                                <button onClick={() => setUserRole('STUDENT')} className="w-full bg-[#f4f7fc] hover:bg-blue-50 border border-blue-100 text-blue-900 font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3"><i data-lucide="user" className="w-5 h-5"></i> Masuk sebagai Siswa (Aqsa)</button>
+                                <button onClick={() => setUserRole('ADMIN')} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3"><i data-lucide="shield" className="w-5 h-5"></i> Masuk sebagai Admin (Orang Tua)</button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (userRole === 'ADMIN') return <AdminDashboard onLogout={() => setUserRole(null)} />;
+            if (studentView === 'QUIZ') return <QuizEngine subject={selectedSubject} onComplete={() => setStudentView('DASHBOARD')} onExit={() => setStudentView('DASHBOARD')} />;
+            if (studentView === 'LEARNING') return <LearningModule onComplete={() => setStudentView('DASHBOARD')} onExit={() => setStudentView('DASHBOARD')} />;
+
+            return <StudentDashboard 
+                onStartQuiz={(subj) => { setSelectedSubject(subj); setStudentView('QUIZ'); }} 
+                onStartLearning={() => setStudentView('LEARNING')}
+                onLogout={() => setUserRole(null)} 
+            />;
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
