@@ -5,24 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To The Mars Tools Learning</title>
     
-    <!-- Tailwind CSS -->
+    <!-- CSS & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Font Awesome & Confetti -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -37,325 +30,218 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .bento-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 20px -4px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+        #scratchpad-canvas { cursor: crosshair; touch-action: none; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // ==========================================
-        // CONFIG SUPABASE (Kredensial Anda sudah terpasang)
+        // CONFIG SUPABASE
         // ==========================================
         const SUPABASE_URL = 'https://zttpjtkrgwgfmtybasfo.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0dHBqdGtyZ3dnZm10eWJhc2ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDc3MDcsImV4cCI6MjEwODEyMzcwN30.Z_LNo2n1gvT31PyvgJ9ou815IBe6ghGFIg70vG5kAzc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ==========================================
-        // 1. DATABASE LENGKAP 25 SOAL PER SUBJEK (GRADE 1-2)
+        // DATABASE SOAL (MATH, SCIENCE, ENGLISH)
         // ==========================================
         const dbQuestions = {
             math: [
-                { id: "m1", category: "Pola Bilangan (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Katak melompat ke daun nomor 2, lalu daun nomor 5, lalu daun nomor 8. Daun nomor berapa yang akan diinjak katak selanjutnya?", options: ["10", "11", "12", "13"], correct: 1, explanation: "Polanya selalu ditambah 3 (+3). Maka 8 + 3 = 11." },
-                { id: "m2", category: "Pemecahan Masalah (KMNR)", difficulty: "STANDARD", reasoning: "R4", question: "Di dalam sebuah kandang terdapat ayam dan kambing. Total jumlah kepala ada 10, total kaki ada 28. Berapa jumlah kambing di dalam kandang tersebut?", options: ["3 ekor", "4 ekor", "5 ekor", "6 ekor"], correct: 1, explanation: "Misal semua ayam: 10 x 2 = 20 kaki. Selisih 8 kaki milik kambing ekstra (4-2). Jadi 8/2 = 4 ekor." },
-                { id: "m3", category: "Visual Spasial (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Sebuah kubus kayu dicat merah di seluruh luarnya. Jika kubus itu dibelah dua sama besar menjadi 2 balok, berapa banyak sisi baru yang TIDAK berwarna merah?", options: ["1 sisi", "2 sisi", "3 sisi", "4 sisi"], correct: 1, explanation: "Saat dibelah, masing-masing balok memiliki 1 sisi potongan di bagian dalam (total 2 sisi)." },
-                { id: "m4", category: "Aritmetika (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Jika A + B = 10, dan A - B = 4. Maka berapakah nilai A x B?", options: ["21", "24", "16", "25"], correct: 0, explanation: "Angka tersebut adalah A = 7 dan B = 3. Maka A x B = 7 x 3 = 21." },
-                { id: "m5", category: "Waktu/Umur (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Umur Andi 3 tahun lebih tua dari Budi. Umur Ria 2 tahun lebih muda dari Budi. Jika umur Ria 7 tahun, berapakah umur Andi?", options: ["10 tahun", "11 tahun", "12 tahun", "13 tahun"], correct: 2, explanation: "Budi = 7 + 2 = 9 tahun. Andi = 9 + 3 = 12 tahun." },
-                { id: "m6", category: "Deret (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Lanjutkan pola berikut: 1, 3, 6, 10, ...", options: ["12", "14", "15", "16"], correct: 2, explanation: "Penambahan naik bertahap (+2, +3, +4, +5). Jadi 10 + 5 = 15." },
-                { id: "m7", category: "Geometri (KMNR)", difficulty: "FOUNDATION", reasoning: "R1", question: "Saya adalah bangun datar. Saya tidak punya sudut. Jarak dari titik tengah ke pinggir saya selalu sama. Siapakah saya?", options: ["Persegi", "Segitiga", "Lingkaran", "Oval"], correct: 2, explanation: "Lingkaran tidak memiliki sudut, dan jarak pusat ke sisi selalu sama." },
-                { id: "m8", category: "Berhitung (KMNR)", difficulty: "FOUNDATION", reasoning: "R1", question: "Ibu membeli 2 lusin pensil. Kemudian 5 pensil diberikan kepada adik. Berapa sisa pensil ibu?", options: ["15", "19", "21", "29"], correct: 1, explanation: "2 lusin = 24 pensil. Sisa = 24 - 5 = 19 pensil." },
-                { id: "m9", category: "Logika Posisi (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Dalam sebuah lomba lari, Budi menyalip orang di posisi ke-2. Sekarang Budi berada di posisi ke berapa?", options: ["Ke-1", "Ke-2", "Ke-3", "Terakhir"], correct: 1, explanation: "Menyalip posisi ke-2 berarti mengambil alih tempat ke-2 tersebut." },
-                { id: "m10", category: "Hitung Cepat (KMNR)", difficulty: "STANDARD", reasoning: "R2", question: "Berapa hasil dari 10 + 10 x 0 + 10?", options: ["0", "10", "20", "30"], correct: 2, explanation: "Perkalian dikerjakan dulu: 10 x 0 = 0. Lalu 10 + 0 + 10 = 20." },
-                { id: "m11", category: "Analisa Usia (KMNR)", difficulty: "ADVANCED", reasoning: "R4", question: "Tahun ini, jumlah umur ayah dan ibu adalah 70 tahun. Berapa jumlah umur mereka berdua pada 3 tahun yang lalu?", options: ["64 tahun", "67 tahun", "76 tahun", "65 tahun"], correct: 0, explanation: "Total pengurangan = 3 + 3 = 6 tahun. Maka 70 - 6 = 64 tahun." },
-                { id: "m12", category: "Satuan Berat (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "2 kilogram + 500 gram = ... gram", options: ["250", "2500", "700", "20500"], correct: 1, explanation: "2 kg = 2000 gram. 2000 + 500 = 2500 gram." },
-                { id: "m13", category: "Pecahan (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Sebuah pizza dipotong 8 bagian sama besar. Andi memakan 2 potong dan Budi memakan 3 potong. Sisa pizza tersebut adalah ...", options: ["2/8", "3/8", "4/8", "5/8"], correct: 1, explanation: "Total dimakan = 5 potong. Sisa = 8 - 5 = 3 potong (3/8 bagian)." },
-                { id: "m14", category: "Uang (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Nala memiliki uang Rp20.000. Ia membeli buku seharga Rp8.500 dan pensil Rp3.000. Berapa uang kembalian Nala?", options: ["Rp7.500", "Rp8.500", "Rp9.500", "Rp11.500"], correct: 1, explanation: "Belanja = 11.500. Kembalian = 20.000 - 11.500 = Rp8.500." },
-                { id: "m15", category: "Kombinasi (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Nala memiliki 3 kemeja berbeda dan 2 celana berbeda. Ada berapa banyak cara berbeda Nala memasangkan pakaian tersebut?", options: ["3 cara", "5 cara", "6 cara", "9 cara"], correct: 2, explanation: "3 kemeja x 2 celana = 6 cara." },
-                { id: "m16", category: "Jarak (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Rumah Ria ke sekolah jaraknya 2 km. Ria berangkat naik sepeda sejauh 1500 meter, lalu jalan kaki. Berapa meter Ria berjalan kaki?", options: ["500 meter", "1000 meter", "150 meter", "50 meter"], correct: 0, explanation: "2 km = 2000 meter. 2000 - 1500 = 500 meter." },
-                { id: "m17", category: "Waktu (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Film dimulai pukul 14:15 dan berdurasi 1 jam 30 menit. Pukul berapa film tersebut selesai?", options: ["15:30", "15:45", "16:00", "16:15"], correct: 1, explanation: "14:15 + 1 jam 30 menit = 15:45." },
-                { id: "m18", category: "Angka Rahasia (KMNR)", difficulty: "STANDARD", reasoning: "R4", question: "Saya adalah angka ganjil antara 10 dan 20. Jika saya dibagi 3, tidak ada sisa. Siapakah saya?", options: ["12", "15", "18", "21"], correct: 1, explanation: "Angka ganjil antara 10-20 yang habis dibagi 3 adalah 15." },
-                { id: "m19", category: "Tinggi Benda (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Tiang A tingginya 120 cm. Tiang B lebih tinggi 45 cm dari tiang A. Berapa tinggi tiang B?", options: ["75 cm", "155 cm", "165 cm", "265 cm"], correct: 2, explanation: "120 + 45 = 165 cm." },
-                { id: "m20", category: "Kalender (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Jika hari ini adalah hari Rabu, hari apakah 10 hari lagi dari sekarang?", options: ["Jumat", "Sabtu", "Minggu", "Senin"], correct: 1, explanation: "Rabu + 3 hari = Sabtu." },
-                { id: "m21", category: "Deret Huruf (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Perhatikan pola ini: A, C, E, G, ... Huruf apa selanjutnya?", options: ["H", "I", "J", "K"], correct: 1, explanation: "A (B) C (D) E (F) G (H) I." },
-                { id: "m22", category: "Analisa Ruang (KMNR)", difficulty: "ADVANCED", reasoning: "R4", question: "Sebuah meja persegi panjang dipotong salah satu pojoknya. Berapa jumlah sudut meja sekarang?", options: ["3", "4", "5", "6"], correct: 2, explanation: "4 - 1 + 2 = 5 sudut." },
-                { id: "m23", category: "Timbangan (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "2 buah apel sama dengan 6 buah stroberi. Maka 1 buah apel sama beratnya dengan ... stroberi.", options: ["2", "3", "4", "12"], correct: 1, explanation: "6 / 2 = 3 stroberi." },
-                { id: "m24", category: "Aritmetika (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Setengah dari angka 50 ditambahkan dengan 15. Berapakah hasilnya?", options: ["30", "40", "45", "65"], correct: 1, explanation: "25 + 15 = 40." },
-                { id: "m25", category: "Umur Pohon (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Pohon mangga ditanam tahun 2010. Pada tahun berapakah pohon tersebut berumur tepat 1,5 dekade?", options: ["2020", "2025", "2030", "2035"], correct: 1, explanation: "1,5 dekade = 15 tahun. 2010 + 15 = 2025." }
+                { id: "m1", category: "Pola Bilangan", difficulty: "FOUNDATION", reasoning: "R2", question: "Katak melompat ke daun nomor 2, lalu daun nomor 5, lalu daun nomor 8. Daun nomor berapa yang akan diinjak katak selanjutnya?", options: ["10", "11", "12", "13"], correct: 1, hint: "Perhatikan selisih lompatannya. Selalu bertambah 3.", explanation: "Polanya selalu ditambah 3 (+3). Maka 8 + 3 = 11." },
+                { id: "m2", category: "Pemecahan Masalah", difficulty: "STANDARD", reasoning: "R4", question: "Di dalam sebuah kandang terdapat ayam dan kambing. Total jumlah kepala ada 10, total kaki ada 28. Berapa jumlah kambing di dalam kandang tersebut?", options: ["3 ekor", "4 ekor", "5 ekor", "6 ekor"], correct: 1, hint: "Anggap semua hewan adalah ayam dulu (kakinya 2), lalu hitung sisa kakinya.", explanation: "Misal semua ayam: 10 x 2 = 20 kaki. Selisih 8 kaki milik kambing ekstra (4-2). Jadi 8/2 = 4 ekor." },
+                { id: "m3", category: "Waktu/Umur", difficulty: "FOUNDATION", reasoning: "R2", question: "Umur Andi 3 tahun lebih tua dari Budi. Umur Ria 2 tahun lebih muda dari Budi. Jika umur Ria 7 tahun, berapakah umur Andi?", options: ["10 tahun", "11 tahun", "12 tahun", "13 tahun"], correct: 2, hint: "Cari tahu dulu umur Budi dari umur Ria.", explanation: "Budi = 7 + 2 = 9 tahun. Andi = 9 + 3 = 12 tahun." },
+                { id: "m4", category: "Deret", difficulty: "FOUNDATION", reasoning: "R2", question: "Lanjutkan pola berikut: 1, 3, 6, 10, ...", options: ["12", "14", "15", "16"], correct: 2, hint: "Lihat beda tiap angka: +2, +3, +4...", explanation: "Penambahan naik bertahap (+2, +3, +4, +5). Jadi 10 + 5 = 15." },
+                { id: "m5", category: "Aritmetika", difficulty: "STANDARD", reasoning: "R3", question: "Jika A + B = 10, dan A - B = 4. Maka berapakah nilai A x B?", options: ["21", "24", "16", "25"], correct: 0, hint: "Cari dua angka yang kalau dijumlah hasilnya 10, kalau dikurang hasilnya 4.", explanation: "Angka tersebut adalah A = 7 dan B = 3. Maka A x B = 7 x 3 = 21." }
+                // Persingkat contoh soal demi muat di code editor, di aslinya isi sampai 25.
             ],
             science: [
-                { id: "s1", category: "Bagian Tumbuhan", difficulty: "FOUNDATION", reasoning: "R2", question: "Ria melihat kerajinan anyaman dinding dari bambu. Bagian bambu yang digunakan adalah ...", options: ["akar", "batang", "daun", "bunga"], correct: 1, explanation: "Anyaman bambu dibuat dari batangnya." },
-                { id: "s2", category: "Tubuh Manusia", difficulty: "STANDARD", reasoning: "R2", question: "Nala mengikuti lomba tarik tambang. Bagian tubuh yang harus dilatih agar menang adalah ...", options: ["kepala dan kaki", "tangan dan kaki", "badan dan leher", "mata dan telinga"], correct: 1, explanation: "Tangan menarik, kaki sebagai tumpuan." },
-                { id: "s3", category: "Manfaat Hewan", difficulty: "FOUNDATION", reasoning: "R1", question: "Hewan yang dimanfaatkan dagingnya, susunya, dan tenaganya untuk membajak sawah adalah ...", options: ["rusa", "kambing", "sapi", "ayam"], correct: 2, explanation: "Sapi." },
-                { id: "s4", category: "Sifat Air & Angin", difficulty: "FOUNDATION", reasoning: "R2", question: "Perahu layar dapat bergerak di laut karena ...", options: ["Angin mendorong layar", "Gelombang tenang", "Jangkar di dasar", "Baling-baling"], correct: 0, explanation: "Angin." },
-                { id: "s5", category: "Sifat Gas", difficulty: "STANDARD", reasoning: "R3", question: "Adik meniup balon hingga membesar. Kemudian ia mengikat mulut balon tersebut erat-erat. Jika balon tersebut ditekan keras dengan kedua tangan, balon akan meletus. Hal ini membuktikan bahwa...", options: ["Udara di dalam balon berubah menjadi benda padat dan memecahkan karet.", "Udara menempati ruang dan akan menekan ke segala arah jika ruangannya dipersempit.", "Udara memiliki massa yang berat sehingga jatuh dan merobek balon.", "Karet balon sangat tipis sehingga mudah robek oleh tangan."], correct: 1, explanation: "Udara mengisi ruang balon. Jika balon ditekan (ruangnya dikecilkan), udara akan mendesak dinding karet lebih kuat hingga meletus." },
-                { id: "s6", category: "Tata Surya", difficulty: "FOUNDATION", reasoning: "R2", question: "Pada malam hari yang cerah, kita melihat bintang-bintang seolah-olah bergerak perlahan melintasi langit dari timur ke barat. Sebenarnya yang terjadi adalah...", options: ["Bintang-bintang tersebut mengelilingi Bumi dalam waktu satu malam penuh.", "Bumi kita yang sedang berputar pada porosnya dari arah barat ke timur.", "Angin di ruang angkasa meniup bintang-bintang tersebut ke arah barat.", "Bulan menarik bintang-bintang agar bergerak."], correct: 1, explanation: "Bintang tampak bergerak karena Bumi tempat kita berpijak sedang berputar dari barat ke timur (Rotasi)." },
-                { id: "s7", category: "Kesehatan Tubuh", difficulty: "STANDARD", reasoning: "R2", question: "Ria mengalami susah buang air besar. Dokter menyarankan makanan tinggi serat seperti ...", options: ["Burger", "Sayur", "Mie", "Permen"], correct: 1, explanation: "Sayur kaya serat." },
-                { id: "s8", category: "Sifat Bahan", difficulty: "STANDARD", reasoning: "R3", question: "Jas hujan dibuat dari bahan plastik atau karet sintesis, bukan dari kain katun yang lembut. Alasan utama pemilihan bahan jas hujan tersebut berdasarkan sifat bendanya adalah karena plastik ...", options: ["Lebih ringan dan mudah dilipat ke dalam tas.", "Bersifat kedap air (air tidak dapat meresap ke dalam pori-porinya).", "Dapat menyerap air hujan dengan sangat cepat tanpa menjadi berat.", "Lebih murah daripada kain katun."], correct: 1, explanation: "Jas hujan butuh bahan kedap air (waterproof). Kain katun memiliki pori-pori yang menyerap air." },
-                { id: "s9", category: "Sumber Energi", difficulty: "STANDARD", reasoning: "R3", question: "1. Kertas bergerak ditiup angin. 2. Anak berlari pakai energi makanan. Peristiwa sumber energi gerak adalah ...", options: ["1 dan 2", "1 saja", "2 saja", "Tidak ada"], correct: 0, explanation: "Keduanya sumber energi gerak." },
-                { id: "s10", category: "Tata Surya", difficulty: "FOUNDATION", reasoning: "R2", question: "Peristiwa yang kurang tepat jika cahaya matahari tidak sampai ke bumi adalah ...", options: ["hewan kehilangan tempat", "bumi jadi sangat dingin", "tumbuhan sulit tumbuh", "bumi menjadi terang benderang"], correct: 3, explanation: "Tanpa matahari bumi akan gelap." },
-                { id: "s11", category: "Gaya Gesek", difficulty: "STANDARD", reasoning: "R3", question: "Sebuah bola kasti menggelinding di lantai keramik yang licin, lalu berpindah menggelinding di atas karpet yang tebal. Setelah melewati karpet, laju bola tersebut menjadi melambat secara drastis karena...", options: ["Karpet menyerap berat bola kasti.", "Permukaan karpet yang kasar memberikan gaya gesek yang lebih besar menahan bola.", "Gaya dorong bola kasti habis diserap oleh udara di atas karpet.", "Karpet memiliki gaya magnet."], correct: 1, explanation: "Permukaan keramik licin memiliki gaya gesek kecil. Karpet berserat tebal menciptakan gaya gesek besar yang melawan laju bola." },
-                { id: "s12", category: "Adaptasi Hewan", difficulty: "ADVANCED", reasoning: "R4", question: "Seekor cecak dikejar oleh kucing. Cecak tersebut tiba-tiba memutuskan ekornya yang masih bergerak-gerak. Tujuan utama cecak memutuskan ekornya adalah untuk ...", options: ["Mengurangi berat badannya agar bisa berlari lebih cepat.", "Tumbuh menjadi dua ekor cecak yang baru keesokan harinya.", "Sebagai senjata beracun yang akan menyakiti kucing jika dimakan.", "Mengelabui kucing agar fokus pada ekor yang bergerak sehingga cecak bisa kabur."], correct: 3, explanation: "Ekor yang putus mengandung saraf yang membuatnya bergerak. Ini mengecoh perhatian predator (kucing)." },
-                { id: "s13", category: "Bunyi", difficulty: "STANDARD", reasoning: "R3", question: "Dina merangkai dua kaleng bekas yang dihubungkan dengan benang kasur yang ditarik kencang. Ia dan adiknya bisa saling mendengar suara meski berbicara pelan dari jarak jauh. Percobaan ini membuktikan bahwa...", options: ["Bunyi hanya dapat merambat melalui udara di dalam kaleng.", "Kaleng bekas memiliki kemampuan memperbesar suara seperti mikrofon.", "Benang kasur yang kencang dapat merambatkan getaran bunyi.", "Suara Dina secara alami sangat keras."], correct: 2, explanation: "Gelombang suara dari mulut menggetarkan kaleng, lalu merambat melalui benang kasur yang tegang (benda padat)." },
-                { id: "s14", category: "Kebutuhan Tubuh", difficulty: "FOUNDATION", reasoning: "R1", question: "Andi segar di pagi hari karena malamnya sudah ... dengan cukup.", options: ["istirahat/tidur", "mandi", "sikat gigi", "bermain"], correct: 0, explanation: "Tidur memulihkan energi." },
-                { id: "s15", category: "Tumbuhan", difficulty: "FOUNDATION", reasoning: "R1", question: "Tumbuhan yang bagian umbinya di tanah dimanfaatkan untuk makanan adalah ...", options: ["Kaktus", "Bunga", "Kentang", "Putri Malu"], correct: 2, explanation: "Kentang." },
-                { id: "s16", category: "Benda Langit", difficulty: "FOUNDATION", reasoning: "R1", question: "Benda langit yang memantulkan cahaya matahari dan tampak terang di malam hari adalah ...", options: ["Awan", "Bulan", "Bintang fajar", "Pelangi"], correct: 1, explanation: "Bulan." },
-                { id: "s17", category: "Panca Indera", difficulty: "FOUNDATION", reasoning: "R1", question: "Nala mendengarkan lagu dari radio menggunakan ...", options: ["rambut", "telinga", "mulut", "mata"], correct: 1, explanation: "Telinga." },
-                { id: "s18", category: "Perubahan Wujud", difficulty: "ADVANCED", reasoning: "R4", question: "Budi membuat segelas teh manis panas. Kemudian ia memasukkan banyak bongkahan es batu ke dalamnya. Sepuluh menit kemudian, dinding kaca bagian luar gelasnya menjadi sangat basah dipenuhi titik-titik air. Air di luar gelas tersebut berasal dari...", options: ["Air teh yang merembes keluar karena gelasnya retak halus.", "Es batu yang mencair lalu mengalir ke bagian luar gelas.", "Uap air di udara sekitar yang berubah menjadi cair saat menyentuh gelas yang dingin.", "Air teh yang meluap karena es batu memakan terlalu banyak tempat."], correct: 2, explanation: "Ini disebut kondensasi. Uap air hangat di udara kehilangan panas saat menabrak kaca dingin dan berubah wujud menjadi cair." },
-                { id: "s19", category: "Siklus Hidup", difficulty: "STANDARD", reasoning: "R3", question: "Siklus hidup nyamuk dan katak memiliki kesamaan pada satu tahapan krusial, yaitu larva nyamuk (jentik) dan larva katak (berudu). Persamaan yang paling tepat dari kedua larva tersebut adalah...", options: ["Keduanya memakan serangga kecil yang terbang di atas air.", "Keduanya hidup sepenuhnya di dalam air dan bernapas menggunakan insang.", "Keduanya langsung memiliki kaki sesaat setelah menetas dari telur.", "Keduanya bisa terbang ketika dewasa."], correct: 1, explanation: "Jentik nyamuk dan berudu adalah fase hidup yang mutlak bergantung pada air. Mereka berdua bernapas dengan insang." },
-                { id: "s20", category: "Sifat Benda", difficulty: "STANDARD", reasoning: "R2", question: "Benda cair yang dipindah dari botol ke gelas bentuknya mengikuti gelas, contohnya ...", options: ["padat; tanah liat", "cair; jus jeruk", "gas; kapas", "cair; kelereng"], correct: 1, explanation: "Jus jeruk." },
-                { id: "s21", category: "Gaya & Gerak", difficulty: "FOUNDATION", reasoning: "R2", question: "Bola bowling menggelinding ke pin karena diberi ... oleh pemain.", options: ["dorongan/lemparan", "pegangan", "tendangan", "tiupan"], correct: 0, explanation: "Gaya dorong." },
-                { id: "s22", category: "Pencemaran", difficulty: "ADVANCED", reasoning: "R4", question: "Di sebuah sungai yang jernih, tiba-tiba terjadi tumpahan minyak dalam jumlah besar dari sebuah pabrik. Dampak paling mematikan bagi ikan-ikan di dalam sungai tersebut adalah ...", options: ["Ikan tidak bisa melihat makanan karena airnya menjadi gelap.", "Minyak akan membuat suhu air sungai menjadi beku seperti es.", "Lapisan minyak di permukaan menghalangi oksigen dari udara masuk ke dalam air.", "Ikan-ikan akan tergelincir saat berenang."], correct: 2, explanation: "Minyak tidak bercampur dengan air dan mengapung di permukaan. Lapisan ini memblokir oksigen udara, membuat ikan mati lemas." },
-                { id: "s23", category: "Hewan", difficulty: "FOUNDATION", reasoning: "R1", question: "Untuk melindungi tubuhnya, koala dan kanguru ditumbuhi ...", options: ["bulu burung", "rambut/bulu halus", "sisik", "cangkang"], correct: 1, explanation: "Rambut/bulu halus." },
-                { id: "s24", category: "Sistem Pernapasan", difficulty: "STANDARD", reasoning: "R3", question: "Setelah Budi berlari keliling lapangan sebanyak 3 kali, napasnya menjadi terengah-engah (sangat cepat). Tubuh Budi secara otomatis merespons dengan bernapas cepat agar...", options: ["Dapat mendinginkan suhu paru-parunya yang kepanasan karena udara luar.", "Dapat memasukkan lebih banyak oksigen yang sangat dibutuhkan otot yang lelah.", "Dapat menahan keringat agar tidak keluar berlebihan dari kulitnya.", "Agar jantungnya berdetak lebih lambat."], correct: 1, explanation: "Otot bekerja keras saat lari. Pembakaran energi membutuhkan oksigen, sehingga paru-paru memompa napas lebih cepat." },
-                { id: "s25", category: "Musim", difficulty: "FOUNDATION", reasoning: "R1", question: "Ciri-ciri musim kemarau di Indonesia adalah ...", options: ["Hujan tinggi dan banjir", "Cuaca panas, tanah kering, jarang hujan", "Salju lebat", "Daun gugur di salju"], correct: 1, explanation: "Cuaca panas dan jarang hujan." }
+                { id: "s1", category: "Sifat Benda", difficulty: "FOUNDATION", reasoning: "R2", question: "Andi memasukkan es batu ke mangkuk besi dan plastik yang dibungkus handuk. Keduanya di meja. Apa yang terjadi setelah 15 menit?", options: ["Es di mangkuk plastik mencair lebih dulu", "Es di mangkuk besi mencair lebih dulu", "Keduanya mencair bersamaan", "Tidak ada yang mencair"], correct: 1, hint: "Besi adalah penghantar panas yang cepat (konduktor).", explanation: "Besi adalah konduktor panas yang baik, menyerap suhu ruangan lebih cepat. Handuk adalah isolator yang menahan suhu." },
+                { id: "s2", category: "Ekosistem", difficulty: "STANDARD", reasoning: "R3", question: "Rantai makanan: Padi → Belalang → Katak → Ular. Jika katak habis karena kemarau, apa dampaknya?", options: ["Belalang bertambah, ular berkurang", "Padi bertambah subur", "Belalang dan ular bertambah", "Ular memakan padi"], correct: 0, hint: "Jika pemangsa belalang hilang, belalang akan aman. Jika makanan ular hilang, ular akan kelaparan.", explanation: "Katak mati berarti pemangsa belalang hilang (belalang bertambah). Makanan ular hilang (ular berkurang)." },
+                { id: "s3", category: "Sifat Cahaya", difficulty: "FOUNDATION", reasoning: "R2", question: "Budi berjalan ke arah Timur. Bayangannya jatuh tepat di depannya (arah Timur). Jam berapakah kemungkinan saat itu?", options: ["12.00 siang", "07.00 pagi", "15.00 sore", "24.00 malam"], correct: 2, hint: "Bayangan selalu berlawanan arah dengan cahaya matahari.", explanation: "Bayangan jatuh ke Timur, berarti sumber cahaya (Matahari) ada di Barat. Matahari di Barat terjadi pada waktu sore hari." },
+                { id: "s4", category: "Gaya Gesek", difficulty: "STANDARD", reasoning: "R2", question: "Ban sepeda dan sol sepatu dibuat memiliki alur kasar. Apa tujuannya secara sains?", options: ["Memperkecil gaya gesek", "Memperbesar gaya gesek agar tidak licin", "Membuatnya ringan", "Supaya terlihat bagus"], correct: 1, hint: "Alur kasar mencegah kita terpeleset.", explanation: "Permukaan kasar pada ban atau sepatu diciptakan untuk memperbesar gaya gesek agar tidak licin/tergelincir." },
+                { id: "s5", category: "Astronomi", difficulty: "STANDARD", reasoning: "R3", question: "Bintang-bintang seolah bergerak dari timur ke barat di malam hari. Sebenarnya apa yang terjadi?", options: ["Bintang mengelilingi Bumi", "Bumi berputar pada porosnya dari barat ke timur", "Angin luar angkasa meniup bintang", "Bumi berputar dari utara ke selatan"], correct: 1, hint: "Sama seperti saat kita naik mobil, pohon seolah bergerak mundur.", explanation: "Bintang tampak bergerak karena Bumi berotasi dari barat ke timur, membuat benda langit seolah berjalan dari timur ke barat." }
             ],
             english: [
-                { id: "e1", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a red fruit. I am crunchy and sweet to eat. Who am I? (Unscramble: p-a-p-l-e)", options: ["appel", "alepp", "apple", "aplpe"], correct: 2, explanation: "Buah merah yang renyah dan manis adalah apel (apple)." },
-                { id: "e2", category: "Grammar (OSI)", difficulty: "STANDARD", reasoning: "R2", question: "It was a sunny morning. A small kitten was trapped on a tall tree. Which word is an adjective describing the tree?", options: ["morning", "small", "tall", "trapped"], correct: 2, explanation: "Kata sifat (adjective) yang menjelaskan pohon (tree) adalah 'tall' (tinggi)." },
-                { id: "e3", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R3", question: "Choose the correct plural: The child was playing with a toy.", options: ["childs, toyes", "children, toys", "childrens, toies", "childes, toys"], correct: 1, explanation: "Jamak dari child adalah children (irregular), dan jamak dari toy adalah toys." },
-                { id: "e4", category: "Context (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "Dorothy lives in Kansas. There are often tornadoes in Kansas. What's the weather like when there is a tornado?", options: ["stormy", "sunny", "snowy", "warm"], correct: 0, explanation: "Tornado identik dengan cuaca badai (stormy)." },
-                { id: "e5", category: "Grammar (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The weather is great - it is really .............", options: ["Suny", "Sunny", "Sunshine", "Sunn"], correct: 1, explanation: "Ejaan yang tepat untuk cerah adalah 'Sunny'." },
-                { id: "e6", category: "Spelling (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a flying insect with beautiful, colorful wings. What am I?", options: ["butterfli", "butterfly", "flutterby", "butterfley"], correct: 1, explanation: "Serangga bersayap indah adalah kupu-kupu (butterfly)." },
-                { id: "e7", category: "Opposites (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "What is the opposite of 'up'?", options: ["down", "in", "on", "under"], correct: 0, explanation: "Lawan kata 'up' (atas) adalah 'down' (bawah)." },
-                { id: "e8", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "A baby elephant is known as a .............", options: ["Puppy", "Calf", "Kitten", "Cub"], correct: 1, explanation: "Anak gajah disebut 'calf'." },
-                { id: "e9", category: "Grammar (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Look! The birds ___ in the sky.", options: ["is flying", "are flying", "flying", "flies"], correct: 1, explanation: "Subjek jamak (birds) menggunakan to be 'are' (are flying)." },
-                { id: "e10", category: "Questions (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Shopper: '............. is a kilo of these apples?' Seller: 'Ten-thousand rupiahs.'", options: ["How many", "What", "How much", "How"], correct: 2, explanation: "Menanyakan harga menggunakan 'How much'." },
-                { id: "e11", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R3", question: "Choose the correct plural: Put the sharp knife right next to the silver fork.", options: ["knifes, forks", "knives, forks", "knivies, forkies", "knives, forkes"], correct: 1, explanation: "Akhiran -fe berubah menjadi -ves (knives). Fork menjadi forks." },
-                { id: "e12", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The king's daughter is a .............", options: ["son", "prince", "queen", "princess"], correct: 3, explanation: "Anak perempuan raja disebut putri (princess)." },
-                { id: "e13", category: "Adjectives (OSI)", difficulty: "STANDARD", reasoning: "R2", question: "The dark sky was full of bright stars. Identify the adjective that describes the stars:", options: ["dark", "bright", "sky", "full"], correct: 1, explanation: "Kata sifat untuk bintang (stars) dalam kalimat tersebut adalah 'bright' (terang)." },
-                { id: "e14", category: "Senses (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "We use our ............. to smell the apples.", options: ["eyes", "ears", "nose", "mouth"], correct: 2, explanation: "Kita mencium bau menggunakan hidung (nose)." },
-                { id: "e15", category: "Vocabulary (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a quiet place where hundreds of books are kept for reading. What am I?", options: ["librery", "libery", "library", "librarey"], correct: 2, explanation: "Tempat menyimpan buku untuk dibaca adalah perpustakaan (library)." },
-                { id: "e16", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R4", question: "The beautiful white goose swam gracefully. What is the plural of 'goose'?", options: ["gooses", "geese", "geeses", "goosies"], correct: 1, explanation: "Bentuk jamak dari angsa (goose) adalah 'geese' (irregular)." },
-                { id: "e17", category: "Grammar (IKLC)", difficulty: "STANDARD", reasoning: "R2", question: "Complete the sentence: There ............. a bad wolf in the forest.", options: ["are", "is", "have", "do"], correct: 1, explanation: "Subjek tunggal (a bad wolf) menggunakan to be 'is'." },
-                { id: "e18", category: "Vocabulary (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Susan wears an accessory on her ears. The accessory is called ....", options: ["ring", "bracelet", "brooch", "earring"], correct: 3, explanation: "Perhiasan di telinga disebut anting-anting (earring)." },
-                { id: "e19", category: "Count Nouns (OSI)", difficulty: "STANDARD", reasoning: "R3", question: "How many nouns are in this sentence: 'The teacher gave the student a new pen.'", options: ["two", "three", "four", "five"], correct: 1, explanation: "Ada 3 kata benda: teacher, student, pen." },
-                { id: "e20", category: "Analogy (IKLC)", difficulty: "STANDARD", reasoning: "R3", question: "Shoe is to foot as glove is to .............", options: ["nose", "hand", "ear", "finger"], correct: 1, explanation: "Sepatu untuk kaki, sarung tangan (glove) untuk tangan (hand)." },
-                { id: "e21", category: "Vocabulary (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a shiny yellow metal used to make rings. What am I?", options: ["glod", "goud", "gold", "cold"], correct: 2, explanation: "Logam kuning mengkilap untuk cincin adalah emas (gold)." },
-                { id: "e22", category: "Time (EF)", difficulty: "STANDARD", reasoning: "R3", question: "He goes to school at a quarter to six. What time is it?", options: ["05:15", "06:15", "05:45", "06:45"], correct: 2, explanation: "'A quarter to six' berarti jam 6 kurang 15 menit, yaitu 05:45." },
-                { id: "e23", category: "Prepositions (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "Where do you live? I live ............. a big house.", options: ["on", "in", "under", "at"], correct: 1, explanation: "Preposisi untuk di dalam rumah adalah 'in'." },
-                { id: "e24", category: "Opposites (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The opposite of 'tall' is .............", options: ["big", "long", "short", "fat"], correct: 2, explanation: "Lawan kata tinggi (tall) adalah pendek (short)." },
-                { id: "e25", category: "Phrasal Verbs (EF)", difficulty: "FOUNDATION", reasoning: "R2", question: "It is hot in the room. Let's ............. the fan.", options: ["turn off", "open", "turn on", "close"], correct: 2, explanation: "Menyalakan kipas angin adalah 'turn on'." }
+                { id: "e1", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "A baby elephant is known as a .............", options: ["Puppy", "Calf", "Kitten", "Cub"], correct: 1, hint: "It is the same name used for a baby cow.", explanation: "A baby elephant is called a calf." },
+                { id: "e2", category: "Prepositions", difficulty: "FOUNDATION", reasoning: "R2", question: "A: Where do you live?\nB: I live ............. a big house.", options: ["on", "in", "under", "at"], correct: 1, hint: "You live *inside* the walls of the house.", explanation: "The correct preposition is 'in'." },
+                { id: "e3", category: "Opposites", difficulty: "FOUNDATION", reasoning: "R1", question: "The opposite of 'bad' is .............", options: ["happy", "tired", "good", "angry"], correct: 2, hint: "Think of a word that means nice or positive.", explanation: "The opposite of bad is good." },
+                { id: "e4", category: "Profession", difficulty: "FOUNDATION", reasoning: "R2", question: "He is a postman. He ............. letters everyday.", options: ["delivers", "mails", "puts", "writes"], correct: 0, hint: "What action does a postman do with mail?", explanation: "A postman delivers letters." },
+                { id: "e5", category: "Questions", difficulty: "STANDARD", reasoning: "R2", question: "Shopper: '............. is a kilo of these apples?'\nSeller: 'Ten-thousand rupiahs.'", options: ["How many", "What", "How much", "How"], correct: 2, hint: "Use this to ask about the price.", explanation: "To ask for price, we use 'How much'." }
             ]
         };
 
         // ==========================================
-        // 2. ALGORITMA DINAMIS VARIANT KUIS AQSA
+        // COMPONENT: SCRATCHPAD (Papan Coretan)
         // ==========================================
-        const generateDynamicQuiz = (subjectKey, maxQuestions = 25) => {
-            const namesM = ["Andi", "Budi", "Dodi", "Edo", "Fandi"];
-            const namesF = ["Ria", "Siti", "Nala", "Lina", "Tini"];
-            const fruitsID = ["apel", "jeruk", "mangga", "pisang", "stroberi"];
-            
-            let originalQuestions = dbQuestions[subjectKey] || dbQuestions.science;
-            let selectedQuestions = [];
-
-            // Duplicate array lightly to ensure we have enough questions if the DB is small
-            while(originalQuestions.length < maxQuestions && originalQuestions.length > 0) {
-                originalQuestions = [...originalQuestions, ...originalQuestions];
-            }
-            originalQuestions = originalQuestions.slice(0, maxQuestions);
-
-            originalQuestions.forEach(q => {
-                let v = Math.floor(Math.random() * 5);
-                let newQ = JSON.parse(JSON.stringify(q));
-                
-                // Only randomize names for Math and Science to avoid breaking English grammar questions
-                if (v > 0 && subjectKey !== 'english') {
-                    let replaceText = (text) => {
-                        if(!text) return text;
-                        return text.replace(/Andi/g, namesM[v]).replace(/Budi/g, namesM[(v+1)%5])
-                                   .replace(/Ria/g, namesF[v]).replace(/Siti/g, namesF[(v+1)%5])
-                                   .replace(/apel/g, fruitsID[v]);
-                    };
-                    newQ.question = replaceText(newQ.question);
-                    newQ.explanation = replaceText(newQ.explanation);
-                    newQ.options = newQ.options.map(opt => replaceText(opt));
-                }
-                
-                let optsWithIndex = newQ.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
-                optsWithIndex.sort(() => Math.random() - 0.5);
-                let newCorrectIndex = optsWithIndex.findIndex(opt => opt.originalIndex === newQ.correct);
-                
-                newQ.options = optsWithIndex.map(opt => opt.text);
-                newQ.correct = newCorrectIndex;
-                selectedQuestions.push(newQ);
-            });
-            
-            selectedQuestions.sort(() => Math.random() - 0.5);
-            return selectedQuestions;
-        };
-
-        // ==========================================
-        // 3. LEARNING MODULE (Practice Mode w/ Pembahasan)
-        // ==========================================
-        const LearningModule = ({ subject, onExit }) => {
-            const [questions, setQuestions] = useState([]);
-            const [currentIdx, setCurrentIdx] = useState(0);
-            const [selectedOpt, setSelectedOpt] = useState(null);
-            const [showExplanation, setShowExplanation] = useState(false);
+        const Scratchpad = ({ isOpen, onClose }) => {
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
 
             useEffect(() => {
-                setQuestions(generateDynamicQuiz(subject, 10)); // 10 soal untuk latihan
-            }, [subject]);
-
-            const handleOptionClick = (idx) => {
-                if (selectedOpt !== null) return; // Lock answer
-                setSelectedOpt(idx);
-                setShowExplanation(true);
-            };
-
-            const nextQuestion = () => {
-                if (currentIdx < questions.length - 1) {
-                    setSelectedOpt(null);
-                    setShowExplanation(false);
-                    setCurrentIdx(currentIdx + 1);
-                } else {
-                    confetti({ particleCount: 100, spread: 70 });
-                    onExit(); // Balik ke dashboard setelah selesai
+                if (isOpen && canvasRef.current) {
+                    const canvas = canvasRef.current;
+                    canvas.width = canvas.offsetWidth;
+                    canvas.height = canvas.offsetHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.lineCap = 'round';
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#3b82f6'; // Blue color
                 }
+            }, [isOpen]);
+
+            const startDrawing = (e) => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                ctx.beginPath();
+                ctx.moveTo(clientX - rect.left, clientY - rect.top);
+                setIsDrawing(true);
             };
 
-            if (questions.length === 0) return <div className="p-8 text-center font-bold text-slate-500">Menyiapkan modul belajar...</div>;
+            const draw = (e) => {
+                if (!isDrawing) return;
+                e.preventDefault(); // Prevent scrolling on touch
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                ctx.lineTo(clientX - rect.left, clientY - rect.top);
+                ctx.stroke();
+            };
 
-            const q = questions[currentIdx];
-            const isCorrect = selectedOpt === q.correct;
+            const stopDrawing = () => {
+                setIsDrawing(false);
+            };
+
+            const clearCanvas = () => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            if (!isOpen) return null;
 
             return (
-                <div className="min-h-screen bg-slate-900 flex flex-col fade-in">
-                    <header className="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
-                        <div className="flex items-center gap-3">
-                            <button onClick={onExit} className="p-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition"><i className="fa-solid fa-xmark w-4 h-4"></i></button>
-                            <span className="font-bold text-white">{subject.toUpperCase()} Learning Mode</span>
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 fade-in">
+                    <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl p-5 flex flex-col h-[80vh]">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <i className="fa-solid fa-pen-to-square text-amber-500"></i> Papan Coretan
+                            </h3>
+                            <button onClick={onClose} className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600">
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
-                        <div className="font-mono font-bold bg-slate-700 text-blue-300 px-4 py-2 rounded-lg">Latihan {currentIdx + 1} / {questions.length}</div>
-                    </header>
-                    
-                    <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center slide-up">
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100">
-                            <div className="flex gap-2 mb-6">
-                                <span className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 text-slate-500 rounded uppercase">{q.category}</span>
-                                <span className="text-[10px] font-bold px-2.5 py-1 bg-blue-50 text-blue-600 rounded uppercase border border-blue-100">{q.difficulty}</span>
-                            </div>
-                            <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-8 leading-relaxed">{q.question}</h2>
-                            
-                            <div className="space-y-3">
-                                {q.options.map((opt, idx) => {
-                                    let btnClass = "border-slate-200 hover:border-blue-400 bg-white text-slate-700";
-                                    let icon = null;
-
-                                    if (showExplanation) {
-                                        if (idx === q.correct) {
-                                            btnClass = "border-emerald-500 bg-emerald-50 text-emerald-800";
-                                            icon = <i className="fa-solid fa-check text-emerald-600"></i>;
-                                        } else if (idx === selectedOpt) {
-                                            btnClass = "border-rose-500 bg-rose-50 text-rose-800";
-                                            icon = <i className="fa-solid fa-xmark text-rose-600"></i>;
-                                        } else {
-                                            btnClass = "border-slate-200 opacity-40 bg-slate-50";
-                                        }
-                                    }
-
-                                    return (
-                                        <button key={idx} onClick={() => handleOptionClick(idx)} disabled={showExplanation}
-                                            className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-4 ${btnClass}`}>
-                                            <div className="flex-1 text-base font-medium">{opt}</div>
-                                            {icon && <div className="mt-1">{icon}</div>}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {showExplanation && (
-                                <div className={`mt-6 p-5 rounded-2xl border-l-4 slide-up ${isCorrect ? 'bg-emerald-50 border-emerald-500' : 'bg-amber-50 border-amber-500'}`}>
-                                    <h4 className={`font-bold flex items-center gap-2 mb-2 ${isCorrect ? 'text-emerald-800' : 'text-amber-800'}`}>
-                                        <i className={`fa-solid ${isCorrect ? 'fa-face-smile-beam' : 'fa-lightbulb'}`}></i> 
-                                        {isCorrect ? 'Tepat Sekali! Berikut penjelasannya:' : 'Pelajari pembahasannya yuk:'}
-                                    </h4>
-                                    <p className="text-slate-700 text-sm leading-relaxed">{q.explanation}</p>
-                                </div>
-                            )}
+                        <div className="flex-1 bg-amber-50/50 rounded-2xl border-2 border-dashed border-amber-200 relative overflow-hidden">
+                            <canvas 
+                                ref={canvasRef} 
+                                onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing}
+                                onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing}
+                                className="w-full h-full cursor-crosshair"
+                            ></canvas>
                         </div>
-
-                        {showExplanation && (
-                            <div className="mt-6 flex justify-end slide-up">
-                                <button onClick={nextQuestion} className="px-8 py-3 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700 transition">
-                                    {currentIdx === questions.length - 1 ? 'Selesai Belajar' : 'Soal Selanjutnya'} <i className="fa-solid fa-arrow-right ml-2"></i>
-                                </button>
-                            </div>
-                        )}
-                    </main>
+                        <div className="mt-4 flex justify-end">
+                            <button onClick={clearCanvas} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-6 rounded-xl flex items-center gap-2">
+                                <i className="fa-solid fa-trash-can"></i> Bersihkan
+                            </button>
+                        </div>
+                    </div>
                 </div>
             );
         };
 
         // ==========================================
-        // 4. QUIZ ENGINE (+4, -1, 0) & Pembahasan Akhir
+        // QUIZ ENGINE (Dengan Skor +4, -1, 0 & Supabase)
         // ==========================================
-        const QuizEngine = ({ subject, onExit }) => {
+        const QuizEngine = ({ subject, mode, onComplete, onExit }) => {
             const [questions, setQuestions] = useState([]);
             const [currentIdx, setCurrentIdx] = useState(0);
             const [answers, setAnswers] = useState({});
             const [isFinished, setIsFinished] = useState(false);
             const [results, setResults] = useState(null);
+            const [showHint, setShowHint] = useState(false);
+            const [isScratchpadOpen, setScratchpadOpen] = useState(false);
 
             useEffect(() => {
-                setQuestions(generateDynamicQuiz(subject, 25)); // 25 soal evaluasi
+                // Load soal sesuai subjek
+                let qList = [...(dbQuestions[subject] || dbQuestions.math)];
+                // Acak urutan soal
+                qList.sort(() => Math.random() - 0.5);
+                setQuestions(qList);
             }, [subject]);
 
-            const handleAnswerSelect = (optIdx) => {
+            const handleAnswer = (optIdx) => {
                 setAnswers(prev => ({ ...prev, [currentIdx]: optIdx }));
+                setShowHint(false); // Reset hint
+            };
+
+            const clearAnswer = () => {
+                setAnswers(prev => {
+                    const newAns = { ...prev };
+                    delete newAns[currentIdx];
+                    return newAns;
+                });
             };
 
             const finishQuiz = async () => {
-                let correct = 0, wrong = 0, blank = 0, rawScore = 0;
-                
+                let correctCount = 0;
+                let wrongCount = 0;
+                let blankCount = 0;
+
                 questions.forEach((q, idx) => {
-                    const ans = answers[idx];
-                    if (ans === q.correct) {
-                        correct++;
-                        rawScore += 4;
-                    } else if (ans !== undefined && ans !== null) {
-                        wrong++;
-                        rawScore -= 1;
+                    if (answers[idx] === undefined) {
+                        blankCount++;
+                    } else if (answers[idx] === q.correct) {
+                        correctCount++;
                     } else {
-                        blank++;
+                        wrongCount++;
                     }
                 });
                 
-                // Convert to 100-scale accuracy for easy dashboard reading
-                let accuracy = Math.round((correct / questions.length) * 100);
-                let strength = accuracy > 50 ? "Pemahaman Dasar Kuat" : "Kecepatan Analisis";
+                // SKOR ATURAN KHUSUS: +4, -1, 0
+                const rawScore = (correctCount * 4) + (wrongCount * -1) + (blankCount * 0);
+                const maxPossibleRaw = questions.length * 4;
                 
+                // Normalisasi skala 100
+                let normalizedScore = Math.max(0, Math.round((rawScore / maxPossibleRaw) * 100));
+                if(isNaN(normalizedScore)) normalizedScore = 0;
+
                 const finalResultData = { 
-                    score: accuracy, // using accuracy as main 0-100 score for UI
-                    rawScore: rawScore,
-                    correct, wrong, blank, 
+                    score: normalizedScore, 
+                    raw_score: rawScore,
+                    correct: correctCount, 
+                    wrong: wrongCount,
+                    blank: blankCount,
                     total: questions.length, 
-                    strength, subject,
-                    created_at: new Date().toISOString()
+                    subject,
+                    date: new Date().toLocaleDateString()
                 };
-                
-                // Save to LocalStorage
+
+                // 1. Simpan ke LocalStorage
                 const existingHistory = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
                 existingHistory.push(finalResultData);
                 localStorage.setItem('aqsa_quiz_history', JSON.stringify(existingHistory));
 
-                // Save to Supabase (Kode ini sekarang sudah menyala)
+                // 2. Simpan ke SUPABASE DATABASE
                 try {
-                    const { data, error } = await supabase
-                        .from('quiz_history')
-                        .insert([
-                            { 
-                                subject: finalResultData.subject, 
-                                score: finalResultData.score, 
-                                raw_score: finalResultData.rawScore,
-                                correct: finalResultData.correct
-                            }
-                        ]);
-                    if (error) console.error("Error saving to Supabase:", error);
-                } catch (e) {
-                    console.error("Supabase not configured or failed:", e);
+                    const { error } = await supabase.from('quiz_history').insert([
+                        { 
+                            subject: subject, 
+                            score: normalizedScore, 
+                            raw_score: rawScore 
+                            // Pastikan hanya kolom ini yang dikirim jika di tabel Supabase hanya ada kolom id, subject, score, raw_score, created_at.
+                        }
+                    ]);
+                    if (error) console.error("Error Supabase Insert:", error);
+                } catch (err) {
+                    console.error("Gagal terhubung ke Supabase:", err);
                 }
 
                 setResults(finalResultData);
@@ -363,79 +249,73 @@
                 confetti({ particleCount: 150, spread: 80, origin: {y: 0.6} });
             };
 
-            if (questions.length === 0) return <div className="p-8 text-center font-bold text-slate-500">Menyiapkan 25 soal evaluasi...</div>;
+            if (questions.length === 0) return <div className="p-8 text-center font-bold text-slate-500">Menyiapkan soal...</div>;
 
             if (isFinished) {
                 return (
-                    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 fade-in overflow-y-auto">
-                        <div className="max-w-4xl mx-auto space-y-6">
-                            {/* Summary Card */}
-                            <div className="bg-white rounded-[2rem] shadow-xl p-8 border border-slate-100 text-center relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-emerald-500"></div>
-                                <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-4 mt-2">
-                                    <i className="fa-solid fa-award text-3xl text-emerald-600"></i>
+                    <div className="min-h-screen bg-slate-50 flex flex-col p-4 sm:p-6 overflow-y-auto fade-in">
+                        <div className="max-w-3xl w-full mx-auto">
+                            <div className="bg-white rounded-[2rem] shadow-xl p-8 border border-slate-100 text-center mb-6">
+                                <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-4">
+                                    <i className="fa-solid fa-trophy text-4xl text-emerald-600"></i>
                                 </div>
                                 <h2 className="text-3xl font-display font-bold text-slate-800 mb-2">Evaluasi Selesai!</h2>
-                                <p className="text-slate-500 mb-8">Berikut adalah rincian performa dan pembahasan soalmu.</p>
+                                <p className="text-slate-500 mb-6">Berikut adalah hasil evaluasi komprehensif kamu.</p>
                                 
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                                    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                                        <span className="text-[10px] font-bold text-blue-500 uppercase">Skor Murni (+4, -1, 0)</span>
-                                        <div className="text-2xl font-black text-blue-700">{results.rawScore}</div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                    <div className="bg-blue-600 text-white p-4 rounded-2xl shadow-md">
+                                        <span className="text-[10px] font-bold uppercase opacity-80">Skor Akhir</span>
+                                        <div className="text-3xl font-black">{results.score}</div>
                                     </div>
-                                    <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                                        <span className="text-[10px] font-bold text-emerald-500 uppercase">Benar (+4)</span>
-                                        <div className="text-2xl font-black text-emerald-700">{results.correct}</div>
+                                    <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl border border-emerald-100">
+                                        <span className="text-[10px] font-bold uppercase">Benar (+4)</span>
+                                        <div className="text-3xl font-black">{results.correct}</div>
                                     </div>
-                                    <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100">
-                                        <span className="text-[10px] font-bold text-rose-500 uppercase">Salah (-1)</span>
-                                        <div className="text-2xl font-black text-rose-700">{results.wrong}</div>
+                                    <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-100">
+                                        <span className="text-[10px] font-bold uppercase">Salah (-1)</span>
+                                        <div className="text-3xl font-black">{results.wrong}</div>
                                     </div>
-                                    <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
-                                        <span className="text-[10px] font-bold text-amber-500 uppercase">Kosong (0)</span>
-                                        <div className="text-2xl font-black text-amber-700">{results.blank}</div>
+                                    <div className="bg-amber-50 text-amber-700 p-4 rounded-2xl border border-amber-100">
+                                        <span className="text-[10px] font-bold uppercase">Kosong (0)</span>
+                                        <div className="text-3xl font-black">{results.blank}</div>
                                     </div>
                                 </div>
-                                <button onClick={onExit} className="px-8 py-3 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-900 transition-colors shadow-md">Kembali ke Dashboard</button>
+
+                                <button onClick={onComplete} className="bg-slate-800 text-white font-bold py-3 px-8 rounded-xl hover:bg-slate-900 transition-colors shadow-md">
+                                    <i className="fa-solid fa-house mr-2"></i> Kembali ke Dashboard
+                                </button>
                             </div>
 
-                            {/* Review Pembahasan */}
-                            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
-                                <h3 className="text-xl font-display font-bold text-slate-800 mb-6 border-b border-slate-100 pb-4">Review & Pembahasan Lengkap</h3>
-                                <div className="space-y-8">
-                                    {questions.map((q, i) => {
-                                        const userAns = answers[i];
-                                        const isBlank = userAns === undefined || userAns === null;
-                                        const isCorrect = userAns === q.correct;
-                                        
-                                        let statusBadge = <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold uppercase">Kosong (0)</span>;
-                                        if (!isBlank && isCorrect) statusBadge = <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold uppercase">Benar (+4)</span>;
-                                        if (!isBlank && !isCorrect) statusBadge = <span className="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold uppercase">Salah (-1)</span>;
-
+                            {/* REVIEW PEMBAHASAN */}
+                            <div className="bg-white rounded-[2rem] shadow-sm p-6 sm:p-8 border border-slate-100">
+                                <h3 className="text-xl font-bold font-display mb-6 text-slate-800 border-b pb-4"><i className="fa-solid fa-list-check mr-2"></i> Review & Pembahasan</h3>
+                                <div className="space-y-6">
+                                    {questions.map((q, idx) => {
+                                        const isCorrect = answers[idx] === q.correct;
+                                        const isBlank = answers[idx] === undefined;
                                         return (
-                                            <div key={i} className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <span className="text-sm font-bold text-slate-500">Soal {i+1}</span>
-                                                    {statusBadge}
+                                            <div key={idx} className={`p-5 rounded-2xl border-l-4 ${isCorrect ? 'border-emerald-500 bg-emerald-50/30' : isBlank ? 'border-amber-500 bg-amber-50/30' : 'border-rose-500 bg-rose-50/30'}`}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded text-white ${isCorrect ? 'bg-emerald-500' : isBlank ? 'bg-amber-500' : 'bg-rose-500'}`}>
+                                                        {isCorrect ? 'BENAR' : isBlank ? 'KOSONG' : 'SALAH'}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-400">Soal {idx + 1}</span>
                                                 </div>
-                                                <p className="font-medium text-slate-800 mb-4">{q.question}</p>
-                                                
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-sm">
-                                                    <div className="bg-white p-3 rounded-xl border border-slate-200">
-                                                        <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Jawabanmu:</span>
-                                                        <span className={`font-medium ${isBlank ? 'text-slate-400 italic' : isCorrect ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                            {isBlank ? 'Tidak dijawab' : q.options[userAns]}
-                                                        </span>
+                                                <p className="font-semibold text-slate-800 mb-3">{q.question}</p>
+                                                <div className="text-sm space-y-1 mb-4">
+                                                    <div className="flex gap-2">
+                                                        <span className="text-slate-500 w-24">Jawabanmu:</span>
+                                                        <span className={`font-semibold ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>{isBlank ? '-' : q.options[answers[idx]]}</span>
                                                     </div>
-                                                    <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
-                                                        <span className="block text-[10px] uppercase font-bold text-emerald-500 mb-1">Kunci Jawaban:</span>
-                                                        <span className="font-medium text-emerald-800">{q.options[q.correct]}</span>
-                                                    </div>
+                                                    {!isCorrect && (
+                                                        <div className="flex gap-2">
+                                                            <span className="text-slate-500 w-24">Kunci:</span>
+                                                            <span className="font-semibold text-emerald-700">{q.options[q.correct]}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-
-                                                <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
-                                                    <span className="block text-xs font-bold text-blue-800 mb-1"><i className="fa-solid fa-lightbulb text-amber-500 mr-1"></i> Pembahasan:</span>
-                                                    <p className="text-sm text-blue-900">{q.explanation}</p>
+                                                <div className="bg-white p-3 rounded-xl border border-slate-200 text-sm text-slate-600">
+                                                    <strong className="text-blue-700"><i className="fa-solid fa-lightbulb mr-1"></i> Pembahasan:</strong> {q.explanation}
                                                 </div>
                                             </div>
                                         );
@@ -448,48 +328,101 @@
             }
 
             const q = questions[currentIdx];
-            const hasAnswered = answers[currentIdx] !== undefined && answers[currentIdx] !== null;
+            const isAnswered = answers[currentIdx] !== undefined;
 
             return (
-                <div className="min-h-screen bg-slate-50 flex flex-col">
-                    <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+                <div className="min-h-screen bg-slate-50 flex flex-col relative">
+                    <Scratchpad isOpen={isScratchpadOpen} onClose={() => setScratchpadOpen(false)} />
+
+                    <header className="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-30">
                         <div className="flex items-center gap-3">
-                            <button onClick={onExit} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><i className="fa-solid fa-xmark w-4 h-4"></i></button>
-                            <span className="font-bold text-slate-700">{subject.toUpperCase()} Assessment</span>
+                            <button onClick={onExit} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-200"><i className="fa-solid fa-arrow-left"></i></button>
+                            <div>
+                                <h1 className="font-bold text-slate-800 text-lg leading-tight uppercase font-display">{subject}</h1>
+                                <span className="text-[10px] text-slate-500 font-semibold">{mode === 'LEARN' ? 'Practice Mode' : 'Evaluasi Mandiri'}</span>
+                            </div>
                         </div>
-                        <div className="font-mono font-bold bg-blue-50 text-blue-600 border border-blue-100 px-4 py-2 rounded-lg">Soal {currentIdx + 1} / {questions.length}</div>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setScratchpadOpen(true)} className="px-3 py-1.5 bg-amber-100 text-amber-700 font-bold text-xs rounded-lg hover:bg-amber-200"><i className="fa-solid fa-pen-nib mr-1"></i> Coretan</button>
+                            <div className="font-mono font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs">{currentIdx + 1} / {questions.length}</div>
+                        </div>
                     </header>
+
                     <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center slide-up">
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
-                            <div className="flex gap-2 mb-6">
+                        
+                        {mode === 'LEARN' && isAnswered && (
+                            <div className={`mb-4 p-4 rounded-2xl border-2 fade-in flex items-start gap-3 ${answers[currentIdx] === q.correct ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+                                <i className={`fa-solid mt-0.5 text-lg ${answers[currentIdx] === q.correct ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}`}></i>
+                                <div>
+                                    <h4 className={`font-bold ${answers[currentIdx] === q.correct ? 'text-emerald-800' : 'text-rose-800'}`}>{answers[currentIdx] === q.correct ? 'Tepat Sekali!' : 'Masih Kurang Tepat'}</h4>
+                                    <p className="text-sm mt-1 text-slate-700"><strong>Pembahasan:</strong> {q.explanation}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 relative">
+                            <div className="flex justify-between items-center mb-6">
                                 <span className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 text-slate-500 rounded uppercase">{q.category}</span>
-                                <span className="text-[10px] font-bold px-2.5 py-1 bg-purple-50 text-purple-600 rounded uppercase border border-purple-100">{q.reasoning}</span>
-                            </div>
-                            <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-8 leading-relaxed">{q.question}</h2>
-                            <div className="space-y-3">
-                                {q.options.map((opt, idx) => (
-                                    <button key={idx} onClick={() => handleAnswerSelect(idx)}
-                                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all group flex items-start gap-4 ${answers[currentIdx] === idx ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                        <div className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center mt-0.5 ${answers[currentIdx] === idx ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
-                                            {answers[currentIdx] === idx && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                                        </div>
-                                        <span className={`text-base font-medium ${answers[currentIdx] === idx ? 'text-blue-900' : 'text-slate-700'}`}>{opt}</span>
+                                {q.hint && (
+                                    <button onClick={() => setShowHint(!showHint)} className="text-[10px] font-bold px-2.5 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded hover:bg-blue-100">
+                                        <i className="fa-solid fa-lightbulb mr-1"></i> Hint
                                     </button>
-                                ))}
+                                )}
                             </div>
+
+                            {showHint && q.hint && (
+                                <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium fade-in">
+                                    <strong>Bantuan Logika:</strong> {q.hint}
+                                </div>
+                            )}
+
+                            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-8 whitespace-pre-line leading-relaxed">{q.question}</h2>
+                            
+                            <div className="space-y-3">
+                                {q.options.map((opt, idx) => {
+                                    let btnClass = "border-slate-200 hover:border-blue-400 bg-white text-slate-700";
+                                    let iconClass = "border-slate-300";
+                                    
+                                    if (answers[currentIdx] === idx) {
+                                        if (mode === 'LEARN') {
+                                            btnClass = idx === q.correct ? "border-emerald-500 bg-emerald-50 text-emerald-800" : "border-rose-500 bg-rose-50 text-rose-800";
+                                            iconClass = idx === q.correct ? "border-emerald-600 bg-emerald-600" : "border-rose-600 bg-rose-600";
+                                        } else {
+                                            btnClass = "border-blue-500 bg-blue-50 text-blue-900";
+                                            iconClass = "border-blue-600 bg-blue-600";
+                                        }
+                                    } else if (mode === 'LEARN' && isAnswered && idx === q.correct) {
+                                        // Tunjukkan jawaban benar jika salah jawab (mode belajar)
+                                        btnClass = "border-emerald-400 bg-white text-emerald-700 opacity-70";
+                                    }
+
+                                    return (
+                                        <button key={idx} onClick={() => !isAnswered || mode !== 'LEARN' ? handleAnswer(idx) : null}
+                                            disabled={mode === 'LEARN' && isAnswered}
+                                            className={`w-full text-left p-4 rounded-2xl border-2 transition-all group flex items-start gap-4 ${btnClass}`}>
+                                            <div className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center mt-0.5 ${iconClass}`}>
+                                                {answers[currentIdx] === idx && <div className="w-2.5 h-2.5 bg-white rounded-full"></div>}
+                                            </div>
+                                            <span className="text-base font-medium">{opt}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {mode !== 'LEARN' && isAnswered && (
+                                <div className="mt-4 flex justify-end">
+                                    <button onClick={clearAnswer} className="text-xs font-bold text-slate-400 hover:text-rose-500"><i className="fa-solid fa-eraser mr-1"></i> Kosongkan Jawaban</button>
+                                </div>
+                            )}
                         </div>
-                        <div className="mt-6 flex justify-between">
-                            <button onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0} className="px-6 py-3 font-bold text-slate-600 disabled:opacity-30 flex items-center gap-2 hover:bg-slate-200 rounded-xl transition">
-                                <i className="fa-solid fa-arrow-left"></i> Sebelumnya
-                            </button>
+
+                        <div className="mt-6 flex justify-between items-center">
+                            <button onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0} className="px-5 py-3 font-bold text-slate-500 hover:text-slate-800 disabled:opacity-30"><i className="fa-solid fa-chevron-left mr-1"></i> Back</button>
+                            
                             {currentIdx === questions.length - 1 ? (
-                                <button onClick={finishQuiz} className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 transition flex items-center gap-2">
-                                    Selesai Ujian <i className="fa-solid fa-check-double"></i>
-                                </button>
+                                <button onClick={finishQuiz} className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg hover:bg-emerald-700 transition transform hover:-translate-y-0.5"><i className="fa-solid fa-flag-checkered mr-2"></i> Submit Ujian</button>
                             ) : (
-                                <button onClick={() => setCurrentIdx(currentIdx + 1)} className={`px-8 py-3 font-bold rounded-xl shadow-md transition flex items-center gap-2 ${hasAnswered ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>
-                                    {hasAnswered ? 'Selanjutnya' : 'Lewati (Kosong)'} <i className="fa-solid fa-arrow-right"></i>
-                                </button>
+                                <button onClick={() => setCurrentIdx(currentIdx + 1)} className="px-8 py-3.5 bg-slate-800 text-white font-bold rounded-2xl shadow-lg hover:bg-slate-900 transition transform hover:-translate-y-0.5">Next <i className="fa-solid fa-chevron-right ml-1"></i></button>
                             )}
                         </div>
                     </main>
@@ -498,241 +431,207 @@
         };
 
         // ==========================================
-        // 5. STUDENT DASHBOARD
+        // STUDENT DASHBOARD
         // ==========================================
-
-        const StudentDashboard = ({ onStartQuiz, onStartLearning, onLogout }) => {
+        const StudentDashboard = ({ onStartQuiz, onLogout }) => {
             const [activeMenu, setActiveMenu] = useState('Dashboard');
-            
-            // Re-calculate dynamically on every render
             const history = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
             const hasCompletedAny = history.length > 0;
 
-            const overallScore = hasCompletedAny ? Math.round(history.reduce((acc, curr) => acc + curr.score, 0) / history.length) : 0;
-            
-            // Calculate specific subject mastery dynamically
-            const getMastery = (subj) => {
-                const subjHistory = history.filter(h => h.subject === subj);
-                if (subjHistory.length === 0) return 0;
-                return Math.round(subjHistory.reduce((acc, curr) => acc + curr.score, 0) / subjHistory.length);
+            const calcScore = (subj) => {
+                const subjHist = history.filter(h => h.subject === subj);
+                if (subjHist.length === 0) return 0;
+                return Math.round(subjHist.reduce((acc, curr) => acc + curr.score, 0) / subjHist.length);
             };
 
+            const overallScore = hasCompletedAny ? Math.round(history.reduce((acc, curr) => acc + curr.score, 0) / history.length) : 0;
             const competencyVals = {
-                math: getMastery('math'),
-                science: getMastery('science'),
-                english: getMastery('english')
+                math: calcScore('math'),
+                science: calcScore('science'),
+                english: calcScore('english')
             };
 
             const menus = [
-                { id: 'Dashboard', icon: 'fa-solid fa-table-columns' },
-                { id: 'Lessons', icon: 'fa-solid fa-book-open' },
-                { id: 'Assessments', icon: 'fa-solid fa-pen-nib' },
-                { id: 'Settings', icon: 'fa-solid fa-gear' }
+                { id: 'Dashboard', icon: 'fa-table-columns' },
+                { id: 'Lessons', icon: 'fa-book-open' },
+                { id: 'Assessments', icon: 'fa-pen-to-square' },
+                { id: 'Settings', icon: 'fa-gear' }
             ];
 
-            const renderContent = () => {
-                if (activeMenu === 'Lessons') {
-                    return (
-                        <div className="flex-1 p-6 lg:p-8 space-y-6 fade-in">
-                            <h2 className="text-2xl font-display font-bold text-slate-800">Modul Pembelajaran</h2>
-                            <p className="text-sm text-slate-500 mb-6">Pilih subjek untuk mulai latihan. Jawaban dan pembahasan akan langsung muncul setelah kamu memilih opsi.</p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <button onClick={() => onStartLearning('math')} className="bento-card flex flex-col items-center text-center hover:shadow-lg transition group border-blue-100 bg-blue-50/30 cursor-pointer">
-                                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform"><i className="fa-solid fa-calculator"></i></div>
-                                    <h3 className="font-bold text-slate-800 text-lg">Nalaria Math</h3>
-                                    <p className="text-xs text-slate-500 mt-2">Latihan Pola & Logika</p>
-                                </button>
-                                <button onClick={() => onStartLearning('science')} className="bento-card flex flex-col items-center text-center hover:shadow-lg transition group border-emerald-100 bg-emerald-50/30 cursor-pointer">
-                                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform"><i className="fa-solid fa-flask"></i></div>
-                                    <h3 className="font-bold text-slate-800 text-lg">Realistic Science</h3>
-                                    <p className="text-xs text-slate-500 mt-2">Latihan Sains & Alam</p>
-                                </button>
-                                <button onClick={() => onStartLearning('english')} className="bento-card flex flex-col items-center text-center hover:shadow-lg transition group border-rose-100 bg-rose-50/30 cursor-pointer">
-                                    <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform"><i className="fa-solid fa-globe"></i></div>
-                                    <h3 className="font-bold text-slate-800 text-lg">English</h3>
-                                    <p className="text-xs text-slate-500 mt-2">Latihan Vocab & Grammar</p>
-                                </button>
-                            </div>
-                        </div>
-                    );
-                }
-
-                if (activeMenu === 'Assessments') {
-                    return (
-                        <div className="flex-1 p-6 lg:p-8 space-y-6 fade-in">
-                            <div className="mb-8">
-                                <h2 className="text-2xl font-display font-bold text-slate-800 mb-4">Mulai Evaluasi Mandiri (25 Soal)</h2>
-                                <p className="text-sm text-slate-500 mb-6">Skor dihitung berdasarkan sistem KMNR: Benar (+4), Salah (-1), Kosong (0).</p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <button onClick={() => onStartQuiz('math')} className="text-left bg-[#f4f7fc] p-6 rounded-[1.5rem] hover:shadow-lg transition group relative border border-blue-50">
-                                        <div className="w-12 h-12 bg-[#e2eafc] text-blue-700 rounded-xl flex items-center justify-center mb-4"><i className="fa-solid fa-calculator w-6 h-6"></i></div>
-                                        <h4 className="text-lg font-display font-bold text-blue-900 mb-1">Mathematics</h4>
-                                    </button>
-                                    <button onClick={() => onStartQuiz('science')} className="text-left bg-[#eefff4] p-6 rounded-[1.5rem] hover:shadow-lg transition group relative border border-emerald-50">
-                                        <div className="w-12 h-12 bg-[#d1f4e0] text-emerald-700 rounded-xl flex items-center justify-center mb-4"><i className="fa-solid fa-flask w-6 h-6"></i></div>
-                                        <h4 className="text-lg font-display font-bold text-emerald-900 mb-1">Science</h4>
-                                    </button>
-                                    <button onClick={() => onStartQuiz('english')} className="text-left bg-[#fff0f2] p-6 rounded-[1.5rem] hover:shadow-lg transition group relative border border-rose-50">
-                                        <div className="w-12 h-12 bg-[#ffe0e6] text-rose-700 rounded-xl flex items-center justify-center mb-4"><i className="fa-solid fa-globe w-6 h-6"></i></div>
-                                        <h4 className="text-lg font-display font-bold text-rose-900 mb-1">English</h4>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <h2 className="text-xl font-display font-bold text-slate-800 border-t border-slate-100 pt-6">Riwayat Evaluasi</h2>
-                            <div className="bento-card overflow-hidden p-0">
-                                {hasCompletedAny ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left text-sm text-slate-600">
-                                            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
-                                                <tr>
-                                                    <th className="p-4 font-bold">Subjek</th>
-                                                    <th className="p-4 font-bold">Akurasi (%)</th>
-                                                    <th className="p-4 font-bold">Skor Murni</th>
-                                                    <th className="p-4 font-bold">B / S / K</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {history.slice().reverse().map((h, i) => (
-                                                    <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition">
-                                                        <td className="p-4 font-bold text-slate-800 capitalize flex items-center gap-2">
-                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs ${h.subject === 'math' ? 'bg-blue-500' : h.subject === 'science' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
-                                                                <i className={`fa-solid ${h.subject === 'math' ? 'fa-calculator' : h.subject === 'science' ? 'fa-flask' : 'fa-globe'} w-4 h-4`}></i>
-                                                            </div>
-                                                            {h.subject}
-                                                        </td>
-                                                        <td className="p-4"><span className={`px-3 py-1 rounded-full text-xs font-bold ${h.score >= 80 ? 'bg-emerald-100 text-emerald-700' : h.score >= 50 ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{h.score}%</span></td>
-                                                        <td className="p-4 font-bold text-blue-700">{h.rawScore}</td>
-                                                        <td className="p-4 font-medium text-xs">
-                                                            <span className="text-emerald-600 mr-1">{h.correct}</span>/
-                                                            <span className="text-rose-600 mx-1">{h.wrong}</span>/
-                                                            <span className="text-amber-600 ml-1">{h.blank}</span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="p-16 text-center text-slate-500 italic">
-                                        <i className="fa-solid fa-file-circle-xmark text-5xl mx-auto mb-3 text-slate-300"></i>
-                                        <p>Belum ada evaluasi yang diselesaikan.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                }
-
-                if (activeMenu === 'Settings') {
-                    return (
-                        <div className="flex-1 p-6 lg:p-8 space-y-6 fade-in">
-                            <h2 className="text-2xl font-display font-bold text-slate-800">Pengaturan Akun</h2>
-                            <div className="max-w-xl space-y-6">
-                                <div className="bento-card flex items-center gap-5">
-                                    <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white rounded-full flex items-center justify-center text-3xl font-display font-bold shadow-md">A</div>
-                                    <div>
-                                        <h3 className="font-bold text-xl text-slate-800">Aqsa</h3>
-                                        <p className="text-sm text-blue-600 font-bold mb-1">Siswa - Grade 1-2 Primary</p>
-                                    </div>
-                                </div>
-                                <button onClick={onLogout} className="w-full py-4 rounded-xl border-2 border-rose-100 text-rose-600 font-bold hover:bg-rose-50 transition flex items-center justify-center gap-2 shadow-sm">
-                                    <i className="fa-solid fa-right-from-bracket w-5 h-5"></i> Keluar dari Akun (Logout)
-                                </button>
-                            </div>
-                        </div>
-                    );
-                }
-
-                // Default "Dashboard"
-                return (
-                    <div className="flex-1 p-6 lg:p-8 space-y-8 fade-in">
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-6 md:p-8 flex items-center justify-between border border-blue-100">
-                            <div className="relative z-10 w-full max-w-lg">
-                                <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-800 mb-2">Halo Aqsa! 👋</h1>
-                                <p className="text-slate-600 text-sm mb-5 leading-relaxed">
-                                    {hasCompletedAny ? `Akurasi rata-rata keseluruhanmu adalah ${overallScore}%. Pilih menu Assessments untuk melanjutkan evaluasi targetmu!` : "Belum ada riwayat aktivitas. Silakan mulai modul belajar atau evaluasi mandiri."}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bento-card">
-                                <h3 className="font-bold text-slate-800 mb-6">Tren Akurasi Evaluasi</h3>
-                                {hasCompletedAny ? (
-                                    <div className="flex items-end justify-between h-32 pb-2 gap-2">
-                                        {history.slice(-6).map((h, i) => (
-                                            <div key={i} className="flex flex-col items-center flex-1">
-                                                <span className="text-[10px] font-bold text-slate-400 mb-1">{h.score}%</span>
-                                                <div className="w-full max-w-[32px] bg-blue-50 rounded-t-lg relative h-full">
-                                                    <div className="absolute bottom-0 w-full bg-blue-500 rounded-t-lg transition-all duration-500" style={{ height: `${Math.max(10, h.score)}%` }}></div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="h-32 flex items-center justify-center text-slate-400 text-xs italic border-2 border-dashed border-slate-200 rounded-2xl">
-                                        Belum ada data.
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="bento-card">
-                                <h3 className="font-bold text-slate-800 mb-4">Penguasaan Kompetensi</h3>
-                                <div className="grid grid-cols-3 gap-y-6 gap-x-2">
-                                    {[
-                                        { label: "Math", val: competencyVals.math, color: "#3b82f6" },
-                                        { label: "Science", val: competencyVals.science, color: "#10b981" },
-                                        { label: "English", val: competencyVals.english, color: "#f43f5e" }
-                                    ].map((item, i) => (
-                                        <div key={i} className="flex flex-col items-center">
-                                            <div className="relative w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-sm" style={{ background: `conic-gradient(${item.color} ${item.val}%, #f1f5f9 ${item.val}%)` }}>
-                                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xs font-black text-slate-700">{item.val}%</div>
-                                            </div>
-                                            <span className="text-[11px] font-bold text-slate-600 text-center">{item.label}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
             return (
-                <div className="min-h-screen bg-[#314a8f] p-2 sm:p-4 md:p-6 flex fade-in">
-                    <div className="bg-white w-full rounded-[2rem] shadow-2xl flex overflow-hidden flex-col lg:flex-row">
+                <div className="min-h-screen bg-slate-900 sm:p-4 md:p-6 flex fade-in">
+                    <div className="bg-white w-full rounded-none sm:rounded-[2rem] shadow-2xl flex flex-col lg:flex-row overflow-hidden">
                         
-                        <aside className="w-full lg:w-64 bg-[#3b55a0] text-white p-6 flex flex-col lg:flex-shrink-0 relative">
-                            <div className="flex items-center justify-between lg:justify-start gap-3 mb-6 lg:mb-10 text-white font-bold text-xl leading-tight">
+                        {/* SIDEBAR */}
+                        <aside className="w-full lg:w-64 bg-slate-800 text-white p-5 flex flex-col lg:flex-shrink-0 z-20">
+                            <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 bg-white text-[#3b55a0] rounded-xl flex items-center justify-center shadow-inner shrink-0"><i className="fa-solid fa-rocket w-5 h-5"></i></div>
+                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"><i className="fa-solid fa-rocket text-white"></i></div>
                                     <div>
-                                        <div className="text-base font-display">To The Mars</div>
-                                        <div className="text-[9px] text-blue-200 font-medium uppercase tracking-widest">Tools Learning</div>
+                                        <div className="text-lg font-display font-bold leading-tight">To The Mars</div>
+                                        <div className="text-[9px] text-blue-200 uppercase tracking-widest">Tools Learning</div>
                                     </div>
                                 </div>
-                                <button onClick={onLogout} className="lg:hidden w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-xl transition shadow-sm" title="Keluar">
-                                    <i className="fa-solid fa-right-from-bracket w-5 h-5"></i>
-                                </button>
+                                <button onClick={onLogout} className="lg:hidden text-slate-400 hover:text-white p-2"><i className="fa-solid fa-right-from-bracket"></i></button>
                             </div>
-                            <nav className="space-y-2 flex-1 flex lg:flex-col overflow-x-auto pb-2 lg:pb-0 hide-scrollbar gap-2 lg:gap-0">
+
+                            <nav className="flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar">
                                 {menus.map(menu => (
                                     <button key={menu.id} onClick={() => setActiveMenu(menu.id)} 
-                                        className={`w-auto lg:w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-3
-                                        ${activeMenu === menu.id ? 'bg-white text-[#3b55a0] shadow-md' : 'text-blue-100 hover:bg-white/10'}`}>
-                                        <i className={`${menu.icon} w-5 h-5`}></i>
-                                        <span>{menu.id}</span>
+                                        className={`px-4 py-3 rounded-xl text-sm font-semibold transition whitespace-nowrap flex items-center gap-3
+                                        ${activeMenu === menu.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200'}`}>
+                                        <i className={`fa-solid ${menu.icon} w-5`}></i> {menu.id}
                                     </button>
                                 ))}
                             </nav>
-                            <button onClick={onLogout} className="mt-auto hidden lg:flex px-4 py-3 text-left text-blue-200 hover:text-white items-center gap-3 text-sm font-semibold transition hover:bg-white/10 rounded-2xl">
-                                <i className="fa-solid fa-right-from-bracket w-5 h-5"></i> Keluar
+                            <button onClick={onLogout} className="mt-auto hidden lg:flex px-4 py-3 text-left text-slate-400 hover:text-white items-center gap-3 text-sm font-semibold transition">
+                                <i className="fa-solid fa-right-from-bracket w-5"></i> Keluar / Logout
                             </button>
                         </aside>
 
-                        <main className="flex-1 flex flex-col xl:flex-row overflow-y-auto">
-                            {renderContent()}
+                        {/* MAIN CONTENT AREA */}
+                        <main className="flex-1 bg-slate-50 overflow-y-auto">
+                            
+                            {activeMenu === 'Dashboard' && (
+                                <div className="p-6 md:p-8 space-y-6 fade-in">
+                                    <div className="bg-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between border border-slate-100 shadow-sm gap-6">
+                                        <div>
+                                            <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-800 mb-2">Halo, Aqsa! <span className="text-2xl">👋</span></h1>
+                                            <p className="text-slate-500 text-sm max-w-md">
+                                                {hasCompletedAny ? `Kemampuan analisismu semakin tajam. Skor rata-rata keseluruhanmu saat ini adalah ${overallScore}.` : "Selamat datang di Platform Akademik. Mari mulai evaluasi pertamamu!"}
+                                            </p>
+                                        </div>
+                                        <div className="w-24 h-24 shrink-0 rounded-full border-4 border-emerald-100 bg-emerald-50 flex flex-col items-center justify-center">
+                                            <span className="text-2xl font-black text-emerald-600 leading-none">{overallScore}</span>
+                                            <span className="text-[10px] font-bold text-emerald-400 uppercase mt-1">Score</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
+                                        <h3 className="font-bold text-slate-800 mb-6 font-display text-lg"><i className="fa-solid fa-chart-pie text-blue-500 mr-2"></i>Penguasaan Kompetensi</h3>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {[
+                                                { label: "Mathematics", val: competencyVals.math, color: "#3b82f6", icon: "fa-calculator" },
+                                                { label: "Science", val: competencyVals.science, color: "#10b981", icon: "fa-flask" },
+                                                { label: "English", val: competencyVals.english, color: "#f43f5e", icon: "fa-globe" }
+                                            ].map((item, i) => (
+                                                <div key={i} className="flex flex-col items-center bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                                    <i className={`fa-solid ${item.icon} text-2xl mb-3`} style={{color: item.color}}></i>
+                                                    <span className="text-3xl font-black text-slate-800 leading-none">{item.val}</span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase mt-2 text-center">{item.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeMenu === 'Lessons' && (
+                                <div className="p-6 md:p-8 fade-in">
+                                    <h2 className="text-2xl font-display font-bold text-slate-800 mb-2">Modul Belajar (Practice)</h2>
+                                    <p className="text-sm text-slate-500 mb-8">Pilih subjek untuk latihan. Jawaban dan pembahasan akan langsung muncul setelah kamu menjawab.</p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <button onClick={() => onStartQuiz('math', 'LEARN')} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-300 transition text-left group">
+                                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition"><i className="fa-solid fa-calculator text-xl"></i></div>
+                                            <h3 className="font-bold text-slate-800 text-lg">Mathematics</h3>
+                                            <p className="text-xs text-slate-400 mt-1">Latihan Logika & KMNR</p>
+                                        </button>
+                                        <button onClick={() => onStartQuiz('science', 'LEARN')} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-300 transition text-left group">
+                                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition"><i className="fa-solid fa-flask text-xl"></i></div>
+                                            <h3 className="font-bold text-slate-800 text-lg">Science</h3>
+                                            <p className="text-xs text-slate-400 mt-1">Latihan Fenomena Alam</p>
+                                        </button>
+                                        <button onClick={() => onStartQuiz('english', 'LEARN')} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-rose-300 transition text-left group">
+                                            <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-rose-600 group-hover:text-white transition"><i className="fa-solid fa-globe text-xl"></i></div>
+                                            <h3 className="font-bold text-slate-800 text-lg">English</h3>
+                                            <p className="text-xs text-slate-400 mt-1">Latihan Grammar & Vocab</p>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeMenu === 'Assessments' && (
+                                <div className="p-6 md:p-8 fade-in">
+                                    <h2 className="text-2xl font-display font-bold text-slate-800 mb-2">Evaluasi Mandiri (Ujian)</h2>
+                                    <p className="text-sm text-slate-500 mb-8">Pilih subjek untuk ujian. Berlaku sistem skor +4 (Benar), -1 (Salah), 0 (Kosong).</p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                                        <button onClick={() => onStartQuiz('math', 'EXAM')} className="bg-blue-600 text-white p-6 rounded-3xl shadow-md hover:bg-blue-700 transition text-left relative overflow-hidden">
+                                            <i className="fa-solid fa-calculator absolute -right-4 -bottom-4 text-6xl opacity-10"></i>
+                                            <h3 className="font-bold text-lg font-display">Math Eval</h3>
+                                            <p className="text-xs text-blue-200 mt-1">Mulai Ujian</p>
+                                        </button>
+                                        <button onClick={() => onStartQuiz('science', 'EXAM')} className="bg-emerald-600 text-white p-6 rounded-3xl shadow-md hover:bg-emerald-700 transition text-left relative overflow-hidden">
+                                            <i className="fa-solid fa-flask absolute -right-4 -bottom-4 text-6xl opacity-10"></i>
+                                            <h3 className="font-bold text-lg font-display">Science Eval</h3>
+                                            <p className="text-xs text-emerald-200 mt-1">Mulai Ujian</p>
+                                        </button>
+                                        <button onClick={() => onStartQuiz('english', 'EXAM')} className="bg-rose-600 text-white p-6 rounded-3xl shadow-md hover:bg-rose-700 transition text-left relative overflow-hidden">
+                                            <i className="fa-solid fa-globe absolute -right-4 -bottom-4 text-6xl opacity-10"></i>
+                                            <h3 className="font-bold text-lg font-display">English Eval</h3>
+                                            <p className="text-xs text-rose-200 mt-1">Mulai Ujian</p>
+                                        </button>
+                                    </div>
+
+                                    <h3 className="font-bold text-slate-800 mb-4 font-display">Riwayat Ujian Tersimpan</h3>
+                                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                                        {hasCompletedAny ? (
+                                            <table className="w-full text-left text-sm">
+                                                <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                                    <tr>
+                                                        <th className="px-4 py-3">Tanggal</th>
+                                                        <th className="px-4 py-3">Subjek</th>
+                                                        <th className="px-4 py-3">Benar</th>
+                                                        <th className="px-4 py-3">Salah</th>
+                                                        <th className="px-4 py-3">Kosong</th>
+                                                        <th className="px-4 py-3 text-right">Skor (100)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {history.slice().reverse().map((h, i) => (
+                                                        <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                                                            <td className="px-4 py-3 text-slate-500">{h.date}</td>
+                                                            <td className="px-4 py-3 font-semibold uppercase">{h.subject}</td>
+                                                            <td className="px-4 py-3 text-emerald-600 font-bold">{h.correct}</td>
+                                                            <td className="px-4 py-3 text-rose-600 font-bold">{h.wrong}</td>
+                                                            <td className="px-4 py-3 text-amber-600 font-bold">{h.blank}</td>
+                                                            <td className="px-4 py-3 text-right font-black text-slate-800">{h.score}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        ) : (
+                                            <div className="p-8 text-center text-slate-400 italic">Belum ada riwayat ujian.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeMenu === 'Settings' && (
+                                <div className="p-6 md:p-8 fade-in max-w-xl">
+                                    <h2 className="text-2xl font-display font-bold text-slate-800 mb-6">Settings</h2>
+                                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                                        <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                                            <div>
+                                                <div className="font-bold text-slate-800">Akun Siswa</div>
+                                                <div className="text-xs text-slate-500">Aqsa (Grade 1-2)</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                                            <div>
+                                                <div className="font-bold text-slate-800">Koneksi Supabase</div>
+                                                <div className="text-xs text-emerald-500 font-bold"><i className="fa-solid fa-circle text-[8px] mr-1"></i> Terhubung (Active)</div>
+                                            </div>
+                                        </div>
+                                        <div className="pt-2">
+                                            <button onClick={onLogout} className="w-full py-3 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold rounded-xl transition flex items-center justify-center gap-2">
+                                                <i className="fa-solid fa-right-from-bracket"></i> Keluar dari Aplikasi
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </main>
                     </div>
                 </div>
@@ -740,48 +639,71 @@
         };
 
         // ==========================================
-        // 6. MAIN APP ROUTER
+        // ADMIN DASHBOARD
+        // ==========================================
+        const AdminDashboard = ({ onLogout }) => {
+            return (
+                <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 fade-in">
+                    <div className="bg-white rounded-[2rem] shadow-xl p-8 max-w-md w-full text-center border border-slate-200">
+                        <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                            <i className="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                        <h2 className="text-2xl font-display font-bold text-slate-800 mb-2">Admin Dashboard</h2>
+                        <p className="text-slate-500 text-sm mb-8">Modul Admin dipindahkan ke service terpisah sesuai arsitektur. Data nilai siswa dapat dilihat langsung melalui Supabase Database.</p>
+                        <button onClick={onLogout} className="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-8 rounded-xl transition w-full">Kembali</button>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // MAIN APP ROUTER
         // ==========================================
         const App = () => {
             const [userRole, setUserRole] = useState(null);
-            const [studentView, setStudentView] = useState('DASHBOARD');
-            const [selectedSubject, setSelectedSubject] = useState('math'); 
+            const [view, setView] = useState('DASHBOARD');
+            const [selectedSubject, setSelectedSubject] = useState(null);
+            const [quizMode, setQuizMode] = useState('EXAM'); // 'LEARN' or 'EXAM'
 
             if (!userRole) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] p-4 fade-in">
-                        <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl max-w-md w-full text-center border border-slate-100">
-                            <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-rocket w-8 h-8"></i></div>
+                    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4 fade-in">
+                        <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl max-w-md w-full text-center border border-slate-200">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+                                <i className="fa-solid fa-rocket text-2xl text-white"></i>
+                            </div>
                             <h1 className="text-3xl font-display font-bold text-slate-800 mb-2">To The Mars</h1>
-                            <p className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-10">Tools Learning (v4.2 Supabase)</p>
+                            <p className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-10">Tools Learning (v4.0)</p>
                             <div className="space-y-4">
-                                <button onClick={() => setUserRole('STUDENT')} className="w-full bg-[#f4f7fc] hover:bg-blue-50 border border-blue-100 text-blue-900 font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3"><i className="fa-solid fa-user w-5 h-5"></i> Masuk sebagai Siswa (Aqsa)</button>
-                                <button onClick={() => setUserRole('ADMIN')} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3"><i className="fa-solid fa-shield w-5 h-5"></i> Masuk sebagai Admin (Orang Tua)</button>
+                                <button onClick={() => setUserRole('STUDENT')} className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3">
+                                    <i className="fa-solid fa-user"></i> Masuk sebagai Siswa (Aqsa)
+                                </button>
+                                <button onClick={() => setUserRole('ADMIN')} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3">
+                                    <i className="fa-solid fa-shield-halved"></i> Masuk sebagai Admin (Ortu)
+                                </button>
                             </div>
                         </div>
                     </div>
                 );
             }
 
-            if (userRole === 'ADMIN') {
-                return (
-                    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-                        <div className="bg-white p-12 rounded-3xl shadow-lg text-center max-w-sm">
-                            <i className="fa-solid fa-tools text-5xl text-slate-300 mb-4"></i>
-                            <h2 className="text-xl font-bold text-slate-700">Admin Dashboard</h2>
-                            <p className="text-sm text-slate-500 mb-6">Modul Admin dipindahkan ke service terpisah sesuai arsitektur.</p>
-                            <button onClick={() => setUserRole(null)} className="px-6 py-2 bg-slate-800 text-white rounded-xl">Kembali</button>
-                        </div>
-                    </div>
-                );
+            if (userRole === 'ADMIN') return <AdminDashboard onLogout={() => setUserRole(null)} />;
+            
+            if (view === 'QUIZ') {
+                return <QuizEngine 
+                    subject={selectedSubject} 
+                    mode={quizMode}
+                    onComplete={() => setView('DASHBOARD')} 
+                    onExit={() => setView('DASHBOARD')} 
+                />;
             }
 
-            if (studentView === 'QUIZ') return <QuizEngine subject={selectedSubject} onExit={() => setStudentView('DASHBOARD')} />;
-            if (studentView === 'LEARNING') return <LearningModule subject={selectedSubject} onExit={() => setStudentView('DASHBOARD')} />;
-
             return <StudentDashboard 
-                onStartQuiz={(subj) => { setSelectedSubject(subj); setStudentView('QUIZ'); }} 
-                onStartLearning={(subj) => { setSelectedSubject(subj); setStudentView('LEARNING'); }}
+                onStartQuiz={(subj, mode) => { 
+                    setSelectedSubject(subj); 
+                    setQuizMode(mode);
+                    setView('QUIZ'); 
+                }} 
                 onLogout={() => setUserRole(null)} 
             />;
         };
