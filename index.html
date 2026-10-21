@@ -1,10 +1,9 @@
-<script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To The Mars Tools Learning (Final Blueprint)</title>
+    <title>To The Mars Tools Learning</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,6 +12,9 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Font Awesome & Confetti -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -42,6 +44,13 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+
+        // ==========================================
+        // CONFIG SUPABASE (Kredensial Anda sudah terpasang)
+        // ==========================================
+        const SUPABASE_URL = 'https://zttpjtkrgwgfmtybasfo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0dHBqdGtyZ3dnZm10eWJhc2ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDc3MDcsImV4cCI6MjEwODEyMzcwN30.Z_LNo2n1gvT31PyvgJ9ou815IBe6ghGFIg70vG5kAzc';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ==========================================
         // 1. DATABASE LENGKAP 25 SOAL PER SUBJEK (GRADE 1-2)
@@ -78,60 +87,55 @@
                 { id: "s1", category: "Bagian Tumbuhan", difficulty: "FOUNDATION", reasoning: "R2", question: "Ria melihat kerajinan anyaman dinding dari bambu. Bagian bambu yang digunakan adalah ...", options: ["akar", "batang", "daun", "bunga"], correct: 1, explanation: "Anyaman bambu dibuat dari batangnya." },
                 { id: "s2", category: "Tubuh Manusia", difficulty: "STANDARD", reasoning: "R2", question: "Nala mengikuti lomba tarik tambang. Bagian tubuh yang harus dilatih agar menang adalah ...", options: ["kepala dan kaki", "tangan dan kaki", "badan dan leher", "mata dan telinga"], correct: 1, explanation: "Tangan menarik, kaki sebagai tumpuan." },
                 { id: "s3", category: "Manfaat Hewan", difficulty: "FOUNDATION", reasoning: "R1", question: "Hewan yang dimanfaatkan dagingnya, susunya, dan tenaganya untuk membajak sawah adalah ...", options: ["rusa", "kambing", "sapi", "ayam"], correct: 2, explanation: "Sapi." },
-                { id: "s4", category: "Lingkungan", difficulty: "STANDARD", reasoning: "R3", question: "Ria melihat temannya membuang plastik ke kolam ikan. Apa yang sebaiknya dilakukan?", options: ["Menertawakan", "Diam saja", "Menegur dengan sopan dan mengajak membuang sampah pada tempatnya", "Ikut membuang sampah"], correct: 2, explanation: "Menegur dengan sopan adalah tindakan menjaga lingkungan terbaik." },
-                { id: "s5", category: "Konservasi Air", difficulty: "FOUNDATION", reasoning: "R2", question: "Nala melihat keran air sekolah menyala hingga siang. Tindakan yang tepat adalah ...", options: ["melaporkan ke guru", "menutup keran tersebut agar air tidak terbuang", "membiarkannya", "bermain air"], correct: 1, explanation: "Menutup keran langsung menghentikan pemborosan." },
-                { id: "s6", category: "Habitat Tumbuhan", difficulty: "FOUNDATION", reasoning: "R1", question: "Di manakah tumbuhan kaktus biasanya tumbuh?", options: ["Sungai", "Hutan", "Gurun", "Laut"], correct: 2, explanation: "Kaktus tumbuh di gurun." },
+                { id: "s4", category: "Sifat Air & Angin", difficulty: "FOUNDATION", reasoning: "R2", question: "Perahu layar dapat bergerak di laut karena ...", options: ["Angin mendorong layar", "Gelombang tenang", "Jangkar di dasar", "Baling-baling"], correct: 0, explanation: "Angin." },
+                { id: "s5", category: "Sifat Gas", difficulty: "STANDARD", reasoning: "R3", question: "Adik meniup balon hingga membesar. Kemudian ia mengikat mulut balon tersebut erat-erat. Jika balon tersebut ditekan keras dengan kedua tangan, balon akan meletus. Hal ini membuktikan bahwa...", options: ["Udara di dalam balon berubah menjadi benda padat dan memecahkan karet.", "Udara menempati ruang dan akan menekan ke segala arah jika ruangannya dipersempit.", "Udara memiliki massa yang berat sehingga jatuh dan merobek balon.", "Karet balon sangat tipis sehingga mudah robek oleh tangan."], correct: 1, explanation: "Udara mengisi ruang balon. Jika balon ditekan (ruangnya dikecilkan), udara akan mendesak dinding karet lebih kuat hingga meletus." },
+                { id: "s6", category: "Tata Surya", difficulty: "FOUNDATION", reasoning: "R2", question: "Pada malam hari yang cerah, kita melihat bintang-bintang seolah-olah bergerak perlahan melintasi langit dari timur ke barat. Sebenarnya yang terjadi adalah...", options: ["Bintang-bintang tersebut mengelilingi Bumi dalam waktu satu malam penuh.", "Bumi kita yang sedang berputar pada porosnya dari arah barat ke timur.", "Angin di ruang angkasa meniup bintang-bintang tersebut ke arah barat.", "Bulan menarik bintang-bintang agar bergerak."], correct: 1, explanation: "Bintang tampak bergerak karena Bumi tempat kita berpijak sedang berputar dari barat ke timur (Rotasi)." },
                 { id: "s7", category: "Kesehatan Tubuh", difficulty: "STANDARD", reasoning: "R2", question: "Ria mengalami susah buang air besar. Dokter menyarankan makanan tinggi serat seperti ...", options: ["Burger", "Sayur", "Mie", "Permen"], correct: 1, explanation: "Sayur kaya serat." },
-                { id: "s8", category: "Peduli Lingkungan", difficulty: "STANDARD", reasoning: "R3", question: "Mengapa kita tidak boleh menghambur-hamburkan makanan?", options: ["Karena mahal", "Bikin kotor", "Meningkatkan sampah dan membuang energi", "Dimarahi teman"], correct: 2, explanation: "Sisa makanan menumpuk jadi sampah." },
+                { id: "s8", category: "Sifat Bahan", difficulty: "STANDARD", reasoning: "R3", question: "Jas hujan dibuat dari bahan plastik atau karet sintesis, bukan dari kain katun yang lembut. Alasan utama pemilihan bahan jas hujan tersebut berdasarkan sifat bendanya adalah karena plastik ...", options: ["Lebih ringan dan mudah dilipat ke dalam tas.", "Bersifat kedap air (air tidak dapat meresap ke dalam pori-porinya).", "Dapat menyerap air hujan dengan sangat cepat tanpa menjadi berat.", "Lebih murah daripada kain katun."], correct: 1, explanation: "Jas hujan butuh bahan kedap air (waterproof). Kain katun memiliki pori-pori yang menyerap air." },
                 { id: "s9", category: "Sumber Energi", difficulty: "STANDARD", reasoning: "R3", question: "1. Kertas bergerak ditiup angin. 2. Anak berlari pakai energi makanan. Peristiwa sumber energi gerak adalah ...", options: ["1 dan 2", "1 saja", "2 saja", "Tidak ada"], correct: 0, explanation: "Keduanya sumber energi gerak." },
                 { id: "s10", category: "Tata Surya", difficulty: "FOUNDATION", reasoning: "R2", question: "Peristiwa yang kurang tepat jika cahaya matahari tidak sampai ke bumi adalah ...", options: ["hewan kehilangan tempat", "bumi jadi sangat dingin", "tumbuhan sulit tumbuh", "bumi menjadi terang benderang"], correct: 3, explanation: "Tanpa matahari bumi akan gelap." },
-                { id: "s11", category: "Sifat Benda", difficulty: "STANDARD", reasoning: "R3", question: "Mengapa stoples kaca pecah saat jatuh, sedangkan botol plastik hanya penyok?", options: ["Kaca lebih ringan", "Kaca kuat", "Kaca bersifat rapuh, plastik lentur", "Plastik lebih berat"], correct: 2, explanation: "Kaca getas, plastik lentur." },
-                { id: "s12", category: "Perubahan Benda", difficulty: "FOUNDATION", reasoning: "R2", question: "Apa yang terjadi pada lilin mainan (plastisin) saat dibentuk-bentuk?", options: ["Hanya berubah sekali", "Berubah warna", "Berubah bentuk, tapi bisa dibentuk kembali", "Langsung mencair"], correct: 2, explanation: "Plastisin bisa dibentuk berulang." },
-                { id: "s13", category: "Cuaca", difficulty: "FOUNDATION", reasoning: "R2", question: "Jika cuaca cerah, kegiatan yang paling tepat dilakukan adalah ...", options: ["Memakai jaket tebal", "Mencuci dan menjemur pakaian", "Memakai jas hujan", "Bermain air"], correct: 1, explanation: "Matahari mengeringkan pakaian." },
+                { id: "s11", category: "Gaya Gesek", difficulty: "STANDARD", reasoning: "R3", question: "Sebuah bola kasti menggelinding di lantai keramik yang licin, lalu berpindah menggelinding di atas karpet yang tebal. Setelah melewati karpet, laju bola tersebut menjadi melambat secara drastis karena...", options: ["Karpet menyerap berat bola kasti.", "Permukaan karpet yang kasar memberikan gaya gesek yang lebih besar menahan bola.", "Gaya dorong bola kasti habis diserap oleh udara di atas karpet.", "Karpet memiliki gaya magnet."], correct: 1, explanation: "Permukaan keramik licin memiliki gaya gesek kecil. Karpet berserat tebal menciptakan gaya gesek besar yang melawan laju bola." },
+                { id: "s12", category: "Adaptasi Hewan", difficulty: "ADVANCED", reasoning: "R4", question: "Seekor cecak dikejar oleh kucing. Cecak tersebut tiba-tiba memutuskan ekornya yang masih bergerak-gerak. Tujuan utama cecak memutuskan ekornya adalah untuk ...", options: ["Mengurangi berat badannya agar bisa berlari lebih cepat.", "Tumbuh menjadi dua ekor cecak yang baru keesokan harinya.", "Sebagai senjata beracun yang akan menyakiti kucing jika dimakan.", "Mengelabui kucing agar fokus pada ekor yang bergerak sehingga cecak bisa kabur."], correct: 3, explanation: "Ekor yang putus mengandung saraf yang membuatnya bergerak. Ini mengecoh perhatian predator (kucing)." },
+                { id: "s13", category: "Bunyi", difficulty: "STANDARD", reasoning: "R3", question: "Dina merangkai dua kaleng bekas yang dihubungkan dengan benang kasur yang ditarik kencang. Ia dan adiknya bisa saling mendengar suara meski berbicara pelan dari jarak jauh. Percobaan ini membuktikan bahwa...", options: ["Bunyi hanya dapat merambat melalui udara di dalam kaleng.", "Kaleng bekas memiliki kemampuan memperbesar suara seperti mikrofon.", "Benang kasur yang kencang dapat merambatkan getaran bunyi.", "Suara Dina secara alami sangat keras."], correct: 2, explanation: "Gelombang suara dari mulut menggetarkan kaleng, lalu merambat melalui benang kasur yang tegang (benda padat)." },
                 { id: "s14", category: "Kebutuhan Tubuh", difficulty: "FOUNDATION", reasoning: "R1", question: "Andi segar di pagi hari karena malamnya sudah ... dengan cukup.", options: ["istirahat/tidur", "mandi", "sikat gigi", "bermain"], correct: 0, explanation: "Tidur memulihkan energi." },
                 { id: "s15", category: "Tumbuhan", difficulty: "FOUNDATION", reasoning: "R1", question: "Tumbuhan yang bagian umbinya di tanah dimanfaatkan untuk makanan adalah ...", options: ["Kaktus", "Bunga", "Kentang", "Putri Malu"], correct: 2, explanation: "Kentang." },
                 { id: "s16", category: "Benda Langit", difficulty: "FOUNDATION", reasoning: "R1", question: "Benda langit yang memantulkan cahaya matahari dan tampak terang di malam hari adalah ...", options: ["Awan", "Bulan", "Bintang fajar", "Pelangi"], correct: 1, explanation: "Bulan." },
                 { id: "s17", category: "Panca Indera", difficulty: "FOUNDATION", reasoning: "R1", question: "Nala mendengarkan lagu dari radio menggunakan ...", options: ["rambut", "telinga", "mulut", "mata"], correct: 1, explanation: "Telinga." },
-                { id: "s18", category: "Wujud Benda", difficulty: "FOUNDATION", reasoning: "R2", question: "Es krim dibiarkan terbuka berubah jadi air. Peristiwa ini disebut ...", options: ["membeku", "mencair", "menguap", "menyublim"], correct: 1, explanation: "Mencair." },
-                { id: "s19", category: "Alat Sekolah", difficulty: "FOUNDATION", reasoning: "R1", question: "Guru menulis di ... menggunakan ...", options: ["papan tulis; spidol", "buku; kapur", "meja; pulpen", "dinding; pensil"], correct: 0, explanation: "Papan tulis dan spidol." },
-                { id: "s20", category: "Ciri Benda", difficulty: "STANDARD", reasoning: "R2", question: "Benda cair yang dipindah dari botol ke gelas bentuknya mengikuti gelas, contohnya ...", options: ["padat; tanah liat", "cair; jus jeruk", "gas; kapas", "cair; kelereng"], correct: 1, explanation: "Jus jeruk." },
+                { id: "s18", category: "Perubahan Wujud", difficulty: "ADVANCED", reasoning: "R4", question: "Budi membuat segelas teh manis panas. Kemudian ia memasukkan banyak bongkahan es batu ke dalamnya. Sepuluh menit kemudian, dinding kaca bagian luar gelasnya menjadi sangat basah dipenuhi titik-titik air. Air di luar gelas tersebut berasal dari...", options: ["Air teh yang merembes keluar karena gelasnya retak halus.", "Es batu yang mencair lalu mengalir ke bagian luar gelas.", "Uap air di udara sekitar yang berubah menjadi cair saat menyentuh gelas yang dingin.", "Air teh yang meluap karena es batu memakan terlalu banyak tempat."], correct: 2, explanation: "Ini disebut kondensasi. Uap air hangat di udara kehilangan panas saat menabrak kaca dingin dan berubah wujud menjadi cair." },
+                { id: "s19", category: "Siklus Hidup", difficulty: "STANDARD", reasoning: "R3", question: "Siklus hidup nyamuk dan katak memiliki kesamaan pada satu tahapan krusial, yaitu larva nyamuk (jentik) dan larva katak (berudu). Persamaan yang paling tepat dari kedua larva tersebut adalah...", options: ["Keduanya memakan serangga kecil yang terbang di atas air.", "Keduanya hidup sepenuhnya di dalam air dan bernapas menggunakan insang.", "Keduanya langsung memiliki kaki sesaat setelah menetas dari telur.", "Keduanya bisa terbang ketika dewasa."], correct: 1, explanation: "Jentik nyamuk dan berudu adalah fase hidup yang mutlak bergantung pada air. Mereka berdua bernapas dengan insang." },
+                { id: "s20", category: "Sifat Benda", difficulty: "STANDARD", reasoning: "R2", question: "Benda cair yang dipindah dari botol ke gelas bentuknya mengikuti gelas, contohnya ...", options: ["padat; tanah liat", "cair; jus jeruk", "gas; kapas", "cair; kelereng"], correct: 1, explanation: "Jus jeruk." },
                 { id: "s21", category: "Gaya & Gerak", difficulty: "FOUNDATION", reasoning: "R2", question: "Bola bowling menggelinding ke pin karena diberi ... oleh pemain.", options: ["dorongan/lemparan", "pegangan", "tendangan", "tiupan"], correct: 0, explanation: "Gaya dorong." },
-                { id: "s22", category: "Kebersihan", difficulty: "FOUNDATION", reasoning: "R1", question: "Cara menjaga lingkungan rumah agar tetap bersih adalah ...", options: ["Mencabut bunga", "Membakar daun", "Membuang sampah pada tempatnya", "Membuang sampah ke sungai"], correct: 2, explanation: "Membuang sampah pada tempatnya." },
+                { id: "s22", category: "Pencemaran", difficulty: "ADVANCED", reasoning: "R4", question: "Di sebuah sungai yang jernih, tiba-tiba terjadi tumpahan minyak dalam jumlah besar dari sebuah pabrik. Dampak paling mematikan bagi ikan-ikan di dalam sungai tersebut adalah ...", options: ["Ikan tidak bisa melihat makanan karena airnya menjadi gelap.", "Minyak akan membuat suhu air sungai menjadi beku seperti es.", "Lapisan minyak di permukaan menghalangi oksigen dari udara masuk ke dalam air.", "Ikan-ikan akan tergelincir saat berenang."], correct: 2, explanation: "Minyak tidak bercampur dengan air dan mengapung di permukaan. Lapisan ini memblokir oksigen udara, membuat ikan mati lemas." },
                 { id: "s23", category: "Hewan", difficulty: "FOUNDATION", reasoning: "R1", question: "Untuk melindungi tubuhnya, koala dan kanguru ditumbuhi ...", options: ["bulu burung", "rambut/bulu halus", "sisik", "cangkang"], correct: 1, explanation: "Rambut/bulu halus." },
-                { id: "s24", category: "Sifat Air & Angin", difficulty: "FOUNDATION", reasoning: "R2", question: "Perahu layar dapat bergerak di laut karena ...", options: ["Angin mendorong layar", "Gelombang tenang", "Jangkar di dasar", "Baling-baling"], correct: 0, explanation: "Angin." },
+                { id: "s24", category: "Sistem Pernapasan", difficulty: "STANDARD", reasoning: "R3", question: "Setelah Budi berlari keliling lapangan sebanyak 3 kali, napasnya menjadi terengah-engah (sangat cepat). Tubuh Budi secara otomatis merespons dengan bernapas cepat agar...", options: ["Dapat mendinginkan suhu paru-parunya yang kepanasan karena udara luar.", "Dapat memasukkan lebih banyak oksigen yang sangat dibutuhkan otot yang lelah.", "Dapat menahan keringat agar tidak keluar berlebihan dari kulitnya.", "Agar jantungnya berdetak lebih lambat."], correct: 1, explanation: "Otot bekerja keras saat lari. Pembakaran energi membutuhkan oksigen, sehingga paru-paru memompa napas lebih cepat." },
                 { id: "s25", category: "Musim", difficulty: "FOUNDATION", reasoning: "R1", question: "Ciri-ciri musim kemarau di Indonesia adalah ...", options: ["Hujan tinggi dan banjir", "Cuaca panas, tanah kering, jarang hujan", "Salju lebat", "Daun gugur di salju"], correct: 1, explanation: "Cuaca panas dan jarang hujan." }
             ],
             english: [
-                { id: "e1", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "A baby elephant is known as a .............", options: ["Puppy", "Calf", "Kitten", "Cub"], correct: 1, explanation: "Anak gajah disebut 'calf'." },
-                { id: "e2", category: "Grammar (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The weather is great - it is really .............", options: ["Suny", "Sunny", "Sunshine", "Sunn"], correct: 1, explanation: "'Sunny' adalah penulisan yang tepat untuk cuaca cerah." },
-                { id: "e3", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "You need an ............. when it rains.", options: ["coat", "umbrela", "jumper", "umbrella"], correct: 3, explanation: "Payung dalam bahasa Inggris ditulis 'umbrella'." },
-                { id: "e4", category: "Prepositions (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "A: Where do you live?\nB: I live ............. a big house.", options: ["on", "in", "under", "at"], correct: 1, explanation: "Preposisi untuk di dalam rumah adalah 'in'." },
-                { id: "e5", category: "Phrasal Verbs (EF)", difficulty: "FOUNDATION", reasoning: "R2", question: "It is hot in the room. Let's ............. the fan.", options: ["turn off", "open", "turn on", "close"], correct: 2, explanation: "Menyalakan kipas angin adalah 'turn on'." },
-                { id: "e6", category: "Time (EF)", difficulty: "STANDARD", reasoning: "R3", question: "He goes to school at a quarter to six. What time is it?", options: ["05:15", "06:15", "05:45", "06:45"], correct: 2, explanation: "'A quarter to six' berarti 15 menit menuju jam 6 (05:45)." },
-                { id: "e7", category: "Context (IKLC)", difficulty: "STANDARD", reasoning: "R3", question: "I am yellow. I am a fruit. Monkeys love to eat me. What am I?", options: ["An apple", "A banana", "A lemon", "A watermelon"], correct: 1, explanation: "Buah kuning kesukaan monyet adalah pisang (A banana)." },
-                { id: "e8", category: "Grammar (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Look! The birds ___ in the sky.", options: ["is flying", "are flying", "flying", "flies"], correct: 1, explanation: "Karena burungnya banyak (birds), gunakan 'are flying'." },
-                { id: "e9", category: "Questions (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Shopper: '............. is a kilo of these apples?'\nSeller: 'Ten-thousand rupiahs.'", options: ["How many", "What", "How much", "How"], correct: 2, explanation: "Menanyakan harga menggunakan 'How much'." },
-                { id: "e10", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The king's daughter is a .............", options: ["son", "prince", "queen", "princess"], correct: 3, explanation: "Anak perempuan raja disebut putri (princess)." },
-                { id: "e11", category: "Opposites (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The opposite of 'tall' is .............", options: ["big", "long", "short", "fat"], correct: 2, explanation: "Lawan kata tinggi (tall) adalah pendek (short)." },
-                { id: "e12", category: "Senses (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "We use our ............. to smell the apples.", options: ["eyes", "ears", "nose", "mouth"], correct: 2, explanation: "Kita mencium bau menggunakan hidung (nose)." },
-                { id: "e13", category: "Opposites (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "What is the opposite of 'up'?", options: ["down", "in", "on", "under"], correct: 0, explanation: "Lawan kata dari 'up' (atas) adalah 'down' (bawah)." },
-                { id: "e14", category: "Analogy (IKLC)", difficulty: "STANDARD", reasoning: "R3", question: "Shoe is to foot as glove is to .............", options: ["nose", "hand", "ear", "finger"], correct: 1, explanation: "Sepatu dipakai di kaki (foot), sarung tangan (glove) dipakai di tangan (hand)." },
-                { id: "e15", category: "Weather (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "What's the weather like when there is a tornado?", options: ["sunny", "snowy", "stormy", "hot"], correct: 2, explanation: "Tornado terjadi saat cuaca badai (stormy)." },
-                { id: "e16", category: "Profession (EF)", difficulty: "STANDARD", reasoning: "R2", question: "He is a postman. He ............. letters everyday.", options: ["delivers", "mails", "puts", "writes"], correct: 0, explanation: "Tugas tukang pos (postman) adalah mengantar (delivers) surat." },
-                { id: "e17", category: "Greeting (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Mimi: 'Susi, this is Nina.'\nSusi: 'Hi, Nina. How do you do?'\nNina: '.............'", options: ["Are you all right?", "How do you do?", "How are you?", "Thank you"], correct: 1, explanation: "Balasan untuk sapaan 'How do you do?' saat pertama kali bertemu adalah 'How do you do?' juga." },
-                { id: "e18", category: "Vocabulary (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a red fruit. I am crunchy and sweet to eat. Who am I? (Unscramble: p-a-p-l-e)", options: ["appel", "alepp", "apple", "aplpe"], correct: 2, explanation: "Buah merah yang renyah dan manis adalah apel (apple)." },
-                { id: "e19", category: "Grammar (OSI)", difficulty: "ADVANCED", reasoning: "R3", question: "A small kitten was trapped on a tall tree. Which word is an adjective describing the tree?", options: ["small", "trapped", "tall", "tree"], correct: 2, explanation: "Kata sifat (adjective) yang menjelaskan kondisi pohon (tree) dalam kalimat tersebut adalah 'tall' (tinggi)." },
-                { id: "e20", category: "Grammar (IKLC)", difficulty: "STANDARD", reasoning: "R2", question: "Complete the sentence: There ............. a bad wolf in the forest.", options: ["are", "is", "have", "do"], correct: 1, explanation: "Karena subjeknya tunggal ('a bad wolf'), to be yang tepat adalah 'is'." },
-                { id: "e21", category: "Pronouns (IKLC)", difficulty: "STANDARD", reasoning: "R2", question: "The woman is holding a broomstick in ............. hands.", options: ["his", "its", "her", "their"], correct: 2, explanation: "Kata ganti kepemilikan untuk perempuan tunggal (woman) adalah 'her'." },
-                { id: "e22", category: "Opposites (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The opposite of 'hot' is .............", options: ["warm", "sweet", "cold", "dirty"], correct: 2, explanation: "Lawan kata dari panas (hot) adalah dingin (cold)." },
-                { id: "e23", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R3", question: "Choose the correct plural: The child was playing with a toy.", options: ["childs, toyes", "children, toys", "childrens, toies", "childes, toys"], correct: 1, explanation: "Bentuk jamak yang benar dari 'child' adalah 'children' (irregular), dan jamak dari 'toy' adalah 'toys'." },
-                { id: "e24", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R3", question: "Choose the correct plural for: knife, fork", options: ["knifes, forks", "knives, forks", "knivies, forkies", "knives, forkes"], correct: 1, explanation: "Kata yang berakhiran '-fe' berubah menjadi '-ves' untuk bentuk jamaknya (knives). Sedangkan 'fork' sekadar ditambah s menjadi 'forks'." },
-                { id: "e25", category: "Count Nouns (OSI)", difficulty: "STANDARD", reasoning: "R2", question: "How many nouns are in this sentence: 'The teacher gave the student a new pen.'", options: ["two", "three", "four", "five"], correct: 1, explanation: "Ada 3 kata benda (noun) di kalimat tersebut yaitu: teacher, student, dan pen." },
-                { id: "e26", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "How many shoes are there in a pair?", options: ["twelve", "thirteen", "two", "ten"], correct: 2, explanation: "Sepasang (a pair) selalu menunjuk pada jumlah dua buah (two)." },
-                { id: "e27", category: "Vocabulary (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Susan wears an accessory on her ears. The accessory is called ....", options: ["ring", "bracelet", "brooch", "earring"], correct: 3, explanation: "Perhiasan yang lazim dipakai di telinga (ears) adalah anting (earring)." },
-                { id: "e28", category: "Vocabulary (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a flying insect with beautiful, colorful wings. What am I?", options: ["butterfli", "butterfly", "flutterby", "butterfley"], correct: 1, explanation: "Serangga terbang bersayap indah adalah kupu-kupu yang ejaannya tepat adalah 'butterfly'." },
-                { id: "e29", category: "Spelling (OSI)", difficulty: "STANDARD", reasoning: "R2", question: "My grandmother baked a delicious, sweet strawberry ...", options: ["cak", "kaik", "cake", "cakee"], correct: 2, explanation: "Ejaan bahasa Inggris yang benar untuk kue adalah 'cake'." },
-                { id: "e30", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R4", question: "The beautiful white goose swam gracefully. What is the plural of 'goose'?", options: ["gooses", "geese", "geeses", "goosies"], correct: 1, explanation: "Bentuk jamak dari angsa (goose) bukanlah gooses, melainkan 'geese' (irregular plural noun)." }
+                { id: "e1", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a red fruit. I am crunchy and sweet to eat. Who am I? (Unscramble: p-a-p-l-e)", options: ["appel", "alepp", "apple", "aplpe"], correct: 2, explanation: "Buah merah yang renyah dan manis adalah apel (apple)." },
+                { id: "e2", category: "Grammar (OSI)", difficulty: "STANDARD", reasoning: "R2", question: "It was a sunny morning. A small kitten was trapped on a tall tree. Which word is an adjective describing the tree?", options: ["morning", "small", "tall", "trapped"], correct: 2, explanation: "Kata sifat (adjective) yang menjelaskan pohon (tree) adalah 'tall' (tinggi)." },
+                { id: "e3", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R3", question: "Choose the correct plural: The child was playing with a toy.", options: ["childs, toyes", "children, toys", "childrens, toies", "childes, toys"], correct: 1, explanation: "Jamak dari child adalah children (irregular), dan jamak dari toy adalah toys." },
+                { id: "e4", category: "Context (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "Dorothy lives in Kansas. There are often tornadoes in Kansas. What's the weather like when there is a tornado?", options: ["stormy", "sunny", "snowy", "warm"], correct: 0, explanation: "Tornado identik dengan cuaca badai (stormy)." },
+                { id: "e5", category: "Grammar (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The weather is great - it is really .............", options: ["Suny", "Sunny", "Sunshine", "Sunn"], correct: 1, explanation: "Ejaan yang tepat untuk cerah adalah 'Sunny'." },
+                { id: "e6", category: "Spelling (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a flying insect with beautiful, colorful wings. What am I?", options: ["butterfli", "butterfly", "flutterby", "butterfley"], correct: 1, explanation: "Serangga bersayap indah adalah kupu-kupu (butterfly)." },
+                { id: "e7", category: "Opposites (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "What is the opposite of 'up'?", options: ["down", "in", "on", "under"], correct: 0, explanation: "Lawan kata 'up' (atas) adalah 'down' (bawah)." },
+                { id: "e8", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "A baby elephant is known as a .............", options: ["Puppy", "Calf", "Kitten", "Cub"], correct: 1, explanation: "Anak gajah disebut 'calf'." },
+                { id: "e9", category: "Grammar (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Look! The birds ___ in the sky.", options: ["is flying", "are flying", "flying", "flies"], correct: 1, explanation: "Subjek jamak (birds) menggunakan to be 'are' (are flying)." },
+                { id: "e10", category: "Questions (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Shopper: '............. is a kilo of these apples?' Seller: 'Ten-thousand rupiahs.'", options: ["How many", "What", "How much", "How"], correct: 2, explanation: "Menanyakan harga menggunakan 'How much'." },
+                { id: "e11", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R3", question: "Choose the correct plural: Put the sharp knife right next to the silver fork.", options: ["knifes, forks", "knives, forks", "knivies, forkies", "knives, forkes"], correct: 1, explanation: "Akhiran -fe berubah menjadi -ves (knives). Fork menjadi forks." },
+                { id: "e12", category: "Vocabulary (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The king's daughter is a .............", options: ["son", "prince", "queen", "princess"], correct: 3, explanation: "Anak perempuan raja disebut putri (princess)." },
+                { id: "e13", category: "Adjectives (OSI)", difficulty: "STANDARD", reasoning: "R2", question: "The dark sky was full of bright stars. Identify the adjective that describes the stars:", options: ["dark", "bright", "sky", "full"], correct: 1, explanation: "Kata sifat untuk bintang (stars) dalam kalimat tersebut adalah 'bright' (terang)." },
+                { id: "e14", category: "Senses (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "We use our ............. to smell the apples.", options: ["eyes", "ears", "nose", "mouth"], correct: 2, explanation: "Kita mencium bau menggunakan hidung (nose)." },
+                { id: "e15", category: "Vocabulary (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a quiet place where hundreds of books are kept for reading. What am I?", options: ["librery", "libery", "library", "librarey"], correct: 2, explanation: "Tempat menyimpan buku untuk dibaca adalah perpustakaan (library)." },
+                { id: "e16", category: "Plurals (OSI)", difficulty: "ADVANCED", reasoning: "R4", question: "The beautiful white goose swam gracefully. What is the plural of 'goose'?", options: ["gooses", "geese", "geeses", "goosies"], correct: 1, explanation: "Bentuk jamak dari angsa (goose) adalah 'geese' (irregular)." },
+                { id: "e17", category: "Grammar (IKLC)", difficulty: "STANDARD", reasoning: "R2", question: "Complete the sentence: There ............. a bad wolf in the forest.", options: ["are", "is", "have", "do"], correct: 1, explanation: "Subjek tunggal (a bad wolf) menggunakan to be 'is'." },
+                { id: "e18", category: "Vocabulary (EF)", difficulty: "STANDARD", reasoning: "R2", question: "Susan wears an accessory on her ears. The accessory is called ....", options: ["ring", "bracelet", "brooch", "earring"], correct: 3, explanation: "Perhiasan di telinga disebut anting-anting (earring)." },
+                { id: "e19", category: "Count Nouns (OSI)", difficulty: "STANDARD", reasoning: "R3", question: "How many nouns are in this sentence: 'The teacher gave the student a new pen.'", options: ["two", "three", "four", "five"], correct: 1, explanation: "Ada 3 kata benda: teacher, student, pen." },
+                { id: "e20", category: "Analogy (IKLC)", difficulty: "STANDARD", reasoning: "R3", question: "Shoe is to foot as glove is to .............", options: ["nose", "hand", "ear", "finger"], correct: 1, explanation: "Sepatu untuk kaki, sarung tangan (glove) untuk tangan (hand)." },
+                { id: "e21", category: "Vocabulary (OSI)", difficulty: "FOUNDATION", reasoning: "R1", question: "I am a shiny yellow metal used to make rings. What am I?", options: ["glod", "goud", "gold", "cold"], correct: 2, explanation: "Logam kuning mengkilap untuk cincin adalah emas (gold)." },
+                { id: "e22", category: "Time (EF)", difficulty: "STANDARD", reasoning: "R3", question: "He goes to school at a quarter to six. What time is it?", options: ["05:15", "06:15", "05:45", "06:45"], correct: 2, explanation: "'A quarter to six' berarti jam 6 kurang 15 menit, yaitu 05:45." },
+                { id: "e23", category: "Prepositions (IKLC)", difficulty: "FOUNDATION", reasoning: "R2", question: "Where do you live? I live ............. a big house.", options: ["on", "in", "under", "at"], correct: 1, explanation: "Preposisi untuk di dalam rumah adalah 'in'." },
+                { id: "e24", category: "Opposites (IKLC)", difficulty: "FOUNDATION", reasoning: "R1", question: "The opposite of 'tall' is .............", options: ["big", "long", "short", "fat"], correct: 2, explanation: "Lawan kata tinggi (tall) adalah pendek (short)." },
+                { id: "e25", category: "Phrasal Verbs (EF)", difficulty: "FOUNDATION", reasoning: "R2", question: "It is hot in the room. Let's ............. the fan.", options: ["turn off", "open", "turn on", "close"], correct: 2, explanation: "Menyalakan kipas angin adalah 'turn on'." }
             ]
         };
 
@@ -146,7 +150,7 @@
             let originalQuestions = dbQuestions[subjectKey] || dbQuestions.science;
             let selectedQuestions = [];
 
-            // Duplicate array lightly to ensure we have enough questions if the DB is small (For prototype)
+            // Duplicate array lightly to ensure we have enough questions if the DB is small
             while(originalQuestions.length < maxQuestions && originalQuestions.length > 0) {
                 originalQuestions = [...originalQuestions, ...originalQuestions];
             }
@@ -156,6 +160,7 @@
                 let v = Math.floor(Math.random() * 5);
                 let newQ = JSON.parse(JSON.stringify(q));
                 
+                // Only randomize names for Math and Science to avoid breaking English grammar questions
                 if (v > 0 && subjectKey !== 'english') {
                     let replaceText = (text) => {
                         if(!text) return text;
@@ -302,7 +307,7 @@
                 setAnswers(prev => ({ ...prev, [currentIdx]: optIdx }));
             };
 
-            const finishQuiz = () => {
+            const finishQuiz = async () => {
                 let correct = 0, wrong = 0, blank = 0, rawScore = 0;
                 
                 questions.forEach((q, idx) => {
@@ -318,11 +323,8 @@
                     }
                 });
                 
-                // Max raw score = total questions * 4
-                const maxRaw = questions.length * 4;
                 // Convert to 100-scale accuracy for easy dashboard reading
                 let accuracy = Math.round((correct / questions.length) * 100);
-                
                 let strength = accuracy > 50 ? "Pemahaman Dasar Kuat" : "Kecepatan Analisis";
                 
                 const finalResultData = { 
@@ -330,12 +332,31 @@
                     rawScore: rawScore,
                     correct, wrong, blank, 
                     total: questions.length, 
-                    strength, subject 
+                    strength, subject,
+                    created_at: new Date().toISOString()
                 };
                 
+                // Save to LocalStorage
                 const existingHistory = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
                 existingHistory.push(finalResultData);
                 localStorage.setItem('aqsa_quiz_history', JSON.stringify(existingHistory));
+
+                // Save to Supabase (Kode ini sekarang sudah menyala)
+                try {
+                    const { data, error } = await supabase
+                        .from('quiz_history')
+                        .insert([
+                            { 
+                                subject: finalResultData.subject, 
+                                score: finalResultData.score, 
+                                raw_score: finalResultData.rawScore,
+                                correct: finalResultData.correct
+                            }
+                        ]);
+                    if (error) console.error("Error saving to Supabase:", error);
+                } catch (e) {
+                    console.error("Supabase not configured or failed:", e);
+                }
 
                 setResults(finalResultData);
                 setIsFinished(true);
@@ -479,8 +500,6 @@
         // ==========================================
         // 5. STUDENT DASHBOARD
         // ==========================================
-        // INITIALIZE SUPABASE HERE LATER:
-        // const supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_KEY');
 
         const StudentDashboard = ({ onStartQuiz, onStartLearning, onLogout }) => {
             const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -734,7 +753,7 @@
                         <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl max-w-md w-full text-center border border-slate-100">
                             <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-rocket w-8 h-8"></i></div>
                             <h1 className="text-3xl font-display font-bold text-slate-800 mb-2">To The Mars</h1>
-                            <p className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-10">Tools Learning (v4.1 Complete)</p>
+                            <p className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-10">Tools Learning (v4.2 Supabase)</p>
                             <div className="space-y-4">
                                 <button onClick={() => setUserRole('STUDENT')} className="w-full bg-[#f4f7fc] hover:bg-blue-50 border border-blue-100 text-blue-900 font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3"><i className="fa-solid fa-user w-5 h-5"></i> Masuk sebagai Siswa (Aqsa)</button>
                                 <button onClick={() => setUserRole('ADMIN')} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3"><i className="fa-solid fa-shield w-5 h-5"></i> Masuk sebagai Admin (Orang Tua)</button>
