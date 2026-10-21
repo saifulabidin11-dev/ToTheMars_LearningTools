@@ -3,15 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To The Mars Tools Learning (Clean Dynamic State)</title>
+    <title>To The Mars Tools Learning (Combined Architecture)</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Icons & Confetti -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -26,15 +34,16 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .bento-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 20px -4px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+        #scratchpad-canvas { cursor: crosshair; touch-action: none; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // ==========================================
+        //        // ==========================================
         // 1. DATABASE LENGKAP 25 SOAL PER SUBJEK (GRADE 1-2)
         // ==========================================
         const dbQuestions = {
@@ -59,7 +68,7 @@
                 { id: "m18", category: "Angka Rahasia (KMNR)", difficulty: "STANDARD", reasoning: "R4", question: "Saya adalah angka ganjil antara 10 dan 20. Jika saya dibagi 3, tidak ada sisa. Siapakah saya?", options: ["12", "15", "18", "21"], correct: 1, explanation: "Angka ganjil antara 10-20 yang habis dibagi 3 adalah 15." },
                 { id: "m19", category: "Tinggi Benda (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Tiang A tingginya 120 cm. Tiang B lebih tinggi 45 cm dari tiang A. Berapa tinggi tiang B?", options: ["75 cm", "155 cm", "165 cm", "265 cm"], correct: 2, explanation: "120 + 45 = 165 cm." },
                 { id: "m20", category: "Kalender (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "Jika hari ini adalah hari Rabu, hari apakah 10 hari lagi dari sekarang?", options: ["Jumat", "Sabtu", "Minggu", "Senin"], correct: 1, explanation: "Rabu + 3 hari = Sabtu." },
-                { id: "m21", category: "Deret Huruf (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Perhatikan pola ini: A, C, E, G, ... Huruf apa selanjutnya?", options: ["H", "I", "J", "K"], correct: 1, hint: "Meloncat 1 huruf.", explanation: "A (B) C (D) E (F) G (H) I." },
+                { id: "m21", category: "Deret Huruf (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Perhatikan pola ini: A, C, E, G, ... Huruf apa selanjutnya?", options: ["H", "I", "J", "K"], correct: 1, explanation: "A (B) C (D) E (F) G (H) I." },
                 { id: "m22", category: "Analisa Ruang (KMNR)", difficulty: "ADVANCED", reasoning: "R4", question: "Sebuah meja persegi panjang dipotong salah satu pojoknya. Berapa jumlah sudut meja sekarang?", options: ["3", "4", "5", "6"], correct: 2, explanation: "4 - 1 + 2 = 5 sudut." },
                 { id: "m23", category: "Timbangan (KMNR)", difficulty: "STANDARD", reasoning: "R3", question: "2 buah apel sama dengan 6 buah stroberi. Maka 1 buah apel sama beratnya dengan ... stroberi.", options: ["2", "3", "4", "12"], correct: 1, explanation: "6 / 2 = 3 stroberi." },
                 { id: "m24", category: "Aritmetika (KMNR)", difficulty: "FOUNDATION", reasoning: "R2", question: "Setengah dari angka 50 ditambahkan dengan 15. Berapakah hasilnya?", options: ["30", "40", "45", "65"], correct: 1, explanation: "25 + 15 = 40." },
@@ -85,7 +94,7 @@
                 { id: "s17", category: "Panca Indera", difficulty: "FOUNDATION", reasoning: "R1", question: "Nala mendengarkan lagu dari radio menggunakan ...", options: ["rambut", "telinga", "mulut", "mata"], correct: 1, explanation: "Telinga." },
                 { id: "s18", category: "Wujud Benda", difficulty: "FOUNDATION", reasoning: "R2", question: "Es krim dibiarkan terbuka berubah jadi air. Peristiwa ini disebut ...", options: ["membeku", "mencair", "menguap", "menyublim"], correct: 1, explanation: "Mencair." },
                 { id: "s19", category: "Alat Sekolah", difficulty: "FOUNDATION", reasoning: "R1", question: "Guru menulis di ... menggunakan ...", options: ["papan tulis; spidol", "buku; kapur", "meja; pulpen", "dinding; pensil"], correct: 0, explanation: "Papan tulis dan spidol." },
-                { id: "s20", category: "Ciri Benda", question: "Benda cair yang dipindah dari botol ke gelas bentuknya mengikuti gelas, contohnya ...", options: ["padat; tanah liat", "cair; jus jeruk", "gas; kapas", "cair; kelereng"], correct: 1, explanation: "Jus jeruk." },
+                { id: "s20", category: "Ciri Benda", difficulty: "FOUNDATION", reasoning: "R2", question: "Benda cair yang dipindah dari botol ke gelas bentuknya mengikuti gelas, contohnya ...", options: ["padat; tanah liat", "cair; jus jeruk", "gas; kapas", "cair; kelereng"], correct: 1, explanation: "Jus jeruk." },
                 { id: "s21", category: "Gaya & Gerak", difficulty: "FOUNDATION", reasoning: "R2", question: "Bola bowling menggelinding ke pin karena diberi ... oleh pemain.", options: ["dorongan/lemparan", "pegangan", "tendangan", "tiupan"], correct: 0, explanation: "Gaya dorong." },
                 { id: "s22", category: "Kebersihan", difficulty: "FOUNDATION", reasoning: "R1", question: "Cara menjaga lingkungan rumah agar tetap bersih adalah ...", options: ["Mencabut bunga", "Membakar daun", "Membuang sampah pada tempatnya", "Membuang sampah ke sungai"], correct: 2, explanation: "Membuang sampah pada tempatnya." },
                 { id: "s23", category: "Hewan", difficulty: "FOUNDATION", reasoning: "R1", question: "Untuk melindungi tubuhnya, koala dan kanguru ditumbuhi ...", options: ["bulu burung", "rambut/bulu halus", "sisik", "cangkang"], correct: 1, explanation: "Rambut/bulu halus." },
@@ -117,11 +126,11 @@
                 { id: "e22", category: "Adjectives", difficulty: "FOUNDATION", reasoning: "R1", question: "A dog that is white in color is a .............", options: ["white dog", "black dog", "red dog", "brown dog"], correct: 0, explanation: "white dog." },
                 { id: "e23", category: "Opposites", difficulty: "FOUNDATION", reasoning: "R1", question: "The opposite of 'tall' is .............", options: ["big", "long", "short", "fat"], correct: 2, explanation: "short." },
                 { id: "e24", category: "Family", difficulty: "FOUNDATION", reasoning: "R1", question: "My father's brother is my .............", options: ["uncle", "aunt", "cousin", "grandfather"], correct: 0, explanation: "uncle." },
-                { id: "e25", category: "Senses", category: "FOUNDATION", reasoning: "R1", question: "We use our ............. to smell the apples.", options: ["eyes", "ears", "nose", "mouth"], correct: 2, explanation: "nose." }
+                { id: "e25", category: "Senses", difficulty: "FOUNDATION", reasoning: "R1", question: "We use our ............. to smell the apples.", options: ["eyes", "ears", "nose", "mouth"], correct: 2, explanation: "nose." }
             ]
         };
 
-        // ==========================================
+        //        // ==========================================
         // 2. ALGORITMA DINAMIS VARIANT KUIS AQSA
         // ==========================================
         const generateDynamicQuiz = (subjectKey) => {
@@ -162,13 +171,408 @@
             return selectedQuestions;
         };
 
+        //        // ==========================================
+        // 3. SCRATCHPAD (Analytical Tool)
         // ==========================================
-        // 3. LEARNING MODULE (Fase 9)
+        const Scratchpad = ({ onClose }) => {
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [color, setColor] = useState('#1e293b');
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                const ctx = canvas.getContext('2d');
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = color;
+            }, [color]); // re-trigger on color change to ensure it applies
+
+            const getPointerPos = (e) => {
+                const canvas = canvasRef.current;
+                const rect = canvas.getBoundingClientRect();
+                let clientX, clientY;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            };
+
+            const startDrawing = (e) => {
+                setIsDrawing(true);
+                const pos = getPointerPos(e);
+                const ctx = canvasRef.current.getContext('2d');
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            };
+
+            const draw = (e) => {
+                if (!isDrawing) return;
+                const pos = getPointerPos(e);
+                const ctx = canvasRef.current.getContext('2d');
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            };
+
+            const stopDrawing = () => {
+                if (isDrawing) {
+                    canvasRef.current.getContext('2d').closePath();
+                    setIsDrawing(false);
+                }
+            };
+
+            const clear = () => {
+                const canvas = canvasRef.current;
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-4 fade-in">
+                    <div className="bg-white w-full max-w-2xl rounded-3xl p-4 md:p-5 shadow-2xl border-0 flex flex-col h-[85vh] slide-up">
+                        <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
+                            <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
+                                    <i data-lucide="pen-tool" className="w-4 h-4"></i>
+                                </div>
+                                <h3 className="font-bold text-lg font-display text-slate-800">Analytical Scratchpad</h3>
+                            </div>
+                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center transition"><i data-lucide="x" className="w-4 h-4"></i></button>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 mb-3 bg-slate-50 p-2 rounded-xl text-xs font-bold overflow-x-auto">
+                            <span className="text-slate-500 mr-2">Tools:</span>
+                            {['#1e293b', '#2563eb', '#16a34a', '#dc2626'].map(c => (
+                                <button key={c} onClick={() => setColor(c)} 
+                                    className={`w-6 h-6 rounded-full border-2 outline-none transition ${color === c ? 'border-slate-400 shadow-md' : 'border-transparent'}`} 
+                                    style={{ backgroundColor: c }}></button>
+                            ))}
+                            <div className="h-4 w-px bg-slate-300 mx-2"></div>
+                            <button onClick={clear} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600 hover:bg-slate-100 transition flex items-center gap-1">
+                                <i data-lucide="eraser" className="w-3 h-3"></i> <span>Clear</span>
+                            </button>
+                        </div>
+
+                        <div className="flex-grow bg-slate-50 border border-slate-200 rounded-xl overflow-hidden relative cursor-crosshair">
+                            <canvas ref={canvasRef} id="scratchpad-canvas" className="w-full h-full block bg-white"
+                                onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseOut={stopDrawing}
+                                onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing}
+                            ></canvas>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        //        // ==========================================
+        // 4. QUIZ ENGINE (With Advanced Scoring & Analytics)
+        // ==========================================
+        const QuizEngine = ({ subject, onComplete, onExit }) => {
+            const [questions, setQuestions] = useState([]);
+            const [currentIdx, setCurrentIdx] = useState(0);
+            const [answers, setAnswers] = useState({});
+            const [isFinished, setIsFinished] = useState(false);
+            const [results, setResults] = useState(null);
+            const [timer, setTimer] = useState(0);
+            const [showScratchpad, setShowScratchpad] = useState(false);
+
+            useEffect(() => {
+                setQuestions(generateDynamicQuiz(subject));
+                setTimeout(() => lucide.createIcons(), 50);
+            }, [subject]);
+
+            useEffect(() => {
+                if (isFinished) return;
+                const interval = setInterval(() => setTimer(t => t + 1), 1000);
+                return () => clearInterval(interval);
+            }, [isFinished]);
+
+            useEffect(() => { lucide.createIcons(); }, [currentIdx, isFinished, showScratchpad]);
+
+            const handleAnswer = (optIdx) => {
+                setAnswers(prev => ({ ...prev, [currentIdx]: optIdx }));
+            };
+
+            const finishQuiz = () => {
+                const total = questions.length;
+                let correct = 0, wrong = 0, blank = 0;
+                
+                questions.forEach((q, idx) => {
+                    const userAns = answers[idx];
+                    if (userAns === undefined) blank++;
+                    else if (userAns === q.correct) correct++;
+                    else wrong++;
+                });
+                
+                // Advanced Scoring: +4 Correct, -1 Wrong, 0 Blank
+                const rawScore = (correct * 4) + (wrong * -1);
+                const maxPossible = total * 4;
+                
+                let finalScore = (rawScore / maxPossible) * 100;
+                if (finalScore < 0) finalScore = 0;
+                
+                const accuracy = ((correct / total) * 100).toFixed(0);
+                
+                let strength = finalScore >= 80 ? "Pemahaman Analitis Kuat" : finalScore >= 50 ? "Perkembangan Baik" : "Perlu Evaluasi";
+                
+                const finalResultData = { 
+                    score: parseFloat(finalScore.toFixed(2)), 
+                    correct, wrong, blank, rawScore, accuracy,
+                    total: questions.length, strength, subject,
+                    timeSeconds: timer
+                };
+                
+                const existingHistory = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
+                existingHistory.push(finalResultData);
+                localStorage.setItem('aqsa_quiz_history', JSON.stringify(existingHistory));
+
+                setResults({ ...finalResultData, detailedQuestions: questions, userAnswers: answers });
+                setIsFinished(true);
+                
+                if (finalScore >= 80) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            };
+
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
+
+            if (questions.length === 0) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-500">Menyiapkan 25 soal dinamis...</div>;
+
+            if (isFinished) {
+                return (
+                    <div className="min-h-screen bg-slate-50 flex flex-col p-4 md:p-6 fade-in overflow-y-auto">
+                        <div className="max-w-4xl w-full mx-auto space-y-6">
+                            
+                            <div className="text-center mb-6">
+                                <h2 className="text-3xl font-display font-bold text-slate-800">Analysis Results</h2>
+                                <p className="text-slate-500">Comprehensive Academic Evaluation</p>
+                            </div>
+
+                            {/* Summary Cards */}
+                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                                <div className={`absolute left-0 top-0 bottom-0 w-2 ${results.score >= 80 ? 'bg-emerald-500' : results.score >= 50 ? 'bg-blue-500' : 'bg-amber-500'}`}></div>
+                                <div className="pl-4 text-left w-full md:w-1/2">
+                                    <span className="text-xs uppercase font-extrabold text-slate-400 tracking-wider">Result Status</span>
+                                    <h3 className={`text-3xl font-black mt-1 font-display ${results.score >= 80 ? 'text-emerald-600' : results.score >= 50 ? 'text-blue-600' : 'text-amber-600'}`}>
+                                        {results.score >= 80 ? 'Excellent' : results.score >= 50 ? 'Good Progress' : 'Needs Review'}
+                                    </h3>
+                                </div>
+                                <div className={`text-white px-8 py-4 rounded-full text-center flex-shrink-0 shadow-lg border-4 ${results.score >= 80 ? 'bg-emerald-600 border-emerald-100' : results.score >= 50 ? 'bg-blue-600 border-blue-100' : 'bg-amber-600 border-amber-100'}`}>
+                                    <span className="text-[10px] uppercase font-bold block tracking-wider opacity-80 mb-1">Final Score</span>
+                                    <span className="text-4xl font-black font-display leading-none">{results.score}</span>
+                                    <span className="text-[10px] uppercase font-bold block tracking-wider opacity-80 mt-1">MAX: 100</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="bg-blue-50 text-blue-700 p-4 rounded-2xl border border-blue-100 text-center">
+                                    <div className="text-2xl font-black font-display">{results.accuracy}%</div>
+                                    <div className="text-[10px] uppercase font-bold opacity-80">Accuracy</div>
+                                </div>
+                                <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl border border-emerald-100 text-center">
+                                    <div className="text-2xl font-black font-display">{results.correct}</div>
+                                    <div className="text-[10px] uppercase font-bold opacity-80">Correct (+4)</div>
+                                </div>
+                                <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-100 text-center">
+                                    <div className="text-2xl font-black font-display">{results.wrong}</div>
+                                    <div className="text-[10px] uppercase font-bold opacity-80">Incorrect (-1)</div>
+                                </div>
+                                <div className="bg-amber-50 text-amber-700 p-4 rounded-2xl border border-amber-100 text-center">
+                                    <div className="text-2xl font-black font-display">{results.blank}</div>
+                                    <div className="text-[10px] uppercase font-bold opacity-80">Blank (0)</div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center mt-6">
+                                <button onClick={onComplete} className="px-8 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow-md transition flex items-center gap-2">
+                                    <i data-lucide="home" className="w-5 h-5"></i> Return to Dashboard
+                                </button>
+                            </div>
+
+                            {/* Detailed Review Section */}
+                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mt-8">
+                                <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
+                                    <i data-lucide="file-search" className="w-6 h-6 text-slate-500"></i>
+                                    <h3 className="text-xl font-bold text-slate-800 font-display">Comprehensive Review & Pembahasan</h3>
+                                </div>
+                                
+                                <div className="space-y-5">
+                                    {results.detailedQuestions.map((q, i) => {
+                                        const userAns = results.userAnswers[i];
+                                        const isCorrect = userAns === q.correct;
+                                        const isBlank = userAns === undefined;
+                                        
+                                        return (
+                                            <div key={i} className={`p-4 rounded-xl border-l-4 shadow-sm ${isCorrect ? 'border-emerald-500 bg-emerald-50' : (isBlank ? 'border-amber-500 bg-amber-50' : 'border-rose-500 bg-rose-50')}`}>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="font-bold text-sm text-slate-800">Q{i+1}. {q.category}</span>
+                                                    {isCorrect && <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="check" className="w-3 h-3"></i> Correct (+4)</span>}
+                                                    {isBlank && <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="minus" className="w-3 h-3"></i> Blank (0)</span>}
+                                                    {!isCorrect && !isBlank && <span className="text-xs font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="x" className="w-3 h-3"></i> Incorrect (-1)</span>}
+                                                </div>
+                                                <p className="text-sm text-slate-700 mb-3 font-semibold">{q.question}</p>
+                                                
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-3">
+                                                    <div className="bg-white p-2 rounded border border-slate-200">
+                                                        <span className="text-slate-500 block mb-1">Your Answer:</span>
+                                                        <span className={`font-bold ${isCorrect ? 'text-emerald-600' : (isBlank ? 'text-amber-600' : 'text-rose-600')}`}>
+                                                            {isBlank ? "None" : q.options[userAns]}
+                                                        </span>
+                                                    </div>
+                                                    <div className="bg-white p-2 rounded border border-slate-200">
+                                                        <span className="text-slate-500 block mb-1">Correct Answer:</span>
+                                                        <span className="font-bold text-emerald-600">{q.options[q.correct]}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="text-xs bg-white/60 p-3 rounded-lg border border-slate-200/50">
+                                                    <span className="font-bold text-slate-700 flex items-center gap-1 mb-1"><i data-lucide="book-open" className="w-3 h-3 text-blue-500"></i> Pembahasan:</span>
+                                                    <span className="text-slate-600">{q.explanation}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const q = questions[currentIdx];
+            const answeredCount = Object.keys(answers).length;
+            const progressPct = (answeredCount / questions.length) * 100;
+
+            return (
+                <div className="min-h-screen bg-[#f3f4f6] flex flex-col">
+                    {showScratchpad && <Scratchpad onClose={() => setShowScratchpad(false)} />}
+                    
+                    <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+                        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center space-x-3 cursor-pointer" onClick={onExit}>
+                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-900 flex items-center justify-center text-white shadow-md">
+                                    <i data-lucide="graduation-cap" className="w-6 h-6"></i>
+                                </div>
+                                <div className="hidden sm:block">
+                                    <h1 className="text-base font-bold text-slate-800 leading-none">Comprehensive Assessment</h1>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{subject}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2 md:space-x-3">
+                                <button onClick={() => setShowScratchpad(!showScratchpad)} className="px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold text-sm flex items-center space-x-1.5 transition">
+                                    <i data-lucide="pen-tool" className="w-4 h-4"></i>
+                                    <span className="hidden sm:inline">Scratchpad</span>
+                                </button>
+                                <div className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm flex items-center space-x-1.5 border border-slate-200">
+                                    <i data-lucide="clock" className="w-4 h-4"></i>
+                                    <span>{formatTime(timer)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center slide-up">
+                        
+                        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                                    Question <span className="text-lg text-slate-800">{currentIdx + 1}</span> of {questions.length}
+                                </span>
+                                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                                    {answeredCount} Answered
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5">
+                                <div className="bg-blue-600 h-full rounded-full transition-all duration-300" style={{ width: `${progressPct}%` }}></div>
+                            </div>
+                            
+                            <div className="mt-4 flex flex-wrap gap-1.5 justify-center max-h-24 overflow-y-auto pt-1">
+                                {questions.map((_, idx) => {
+                                    const isAnswered = answers[idx] !== undefined;
+                                    const isCurrent = currentIdx === idx;
+                                    let btnClass = "w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition cursor-pointer border ";
+                                    if (isCurrent) btnClass += "ring-2 ring-offset-1 ring-blue-400 ";
+                                    if (isAnswered) btnClass += "bg-blue-600 text-white border-blue-600";
+                                    else btnClass += "bg-white text-slate-500 border-slate-200 hover:bg-slate-50";
+                                    return <button key={idx} onClick={() => setCurrentIdx(idx)} className={btnClass}>{idx + 1}</button>;
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col min-h-[380px]">
+                            <div className="flex items-center justify-between mb-6">
+                                <span className="px-3 py-1 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5 uppercase">
+                                    <i data-lucide="bookmark" className="w-3 h-3"></i> {q.category}
+                                </span>
+                            </div>
+
+                            <div className="mb-8">
+                                <h2 className="text-lg sm:text-xl font-semibold text-slate-800 leading-relaxed">{q.question}</h2>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+                                {q.options.map((opt, idx) => {
+                                    const isSelected = answers[currentIdx] === idx;
+                                    return (
+                                        <button key={idx} onClick={() => handleAnswer(idx)}
+                                            className={`text-left p-4 rounded-xl border-2 font-bold text-sm flex items-center gap-3 transition-colors ${
+                                                isSelected 
+                                                ? 'bg-blue-50 border-blue-500 text-blue-800 ring-2 ring-blue-200 ring-opacity-50' 
+                                                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-slate-50'
+                                            }`}>
+                                            <div className={`w-8 h-8 rounded-lg flex shrink-0 items-center justify-center text-xs font-black ${isSelected ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                                {String.fromCharCode(65 + idx)}
+                                            </div>
+                                            <span>{opt}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                                <button onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0} className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition disabled:opacity-40 flex items-center gap-1">
+                                    <i data-lucide="arrow-left" className="w-4 h-4"></i> Previous
+                                </button>
+                                
+                                {currentIdx === questions.length - 1 ? (
+                                    <button onClick={() => {
+                                        if (Object.keys(answers).length < questions.length) {
+                                            if(!window.confirm(`You have ${questions.length - Object.keys(answers).length} unanswered questions. Blank answers score 0. Submit anyway?`)) return;
+                                        }
+                                        finishQuiz();
+                                    }} className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition shadow-md flex items-center gap-1">
+                                        <i data-lucide="check-square" className="w-4 h-4"></i> Submit Evaluation
+                                    </button>
+                                ) : (
+                                    <button onClick={() => setCurrentIdx(currentIdx + 1)} className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm transition shadow-md flex items-center gap-1">
+                                        Next <i data-lucide="arrow-right" className="w-4 h-4"></i>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        //        // ==========================================
+        // 5. LEARNING MODULE (Fase 9)
         // ==========================================
         const LearningModule = ({ onComplete, onExit }) => {
             const [step, setStep] = useState(0);
             const [selectedOpt, setSelectedOpt] = useState(null);
             const [feedback, setFeedback] = useState(null);
+
+            useEffect(() => { lucide.createIcons(); }, [step, feedback]);
 
             const steps = [
                 {
@@ -199,7 +603,6 @@
             const handleOptionClick = (idx) => {
                 setSelectedOpt(idx);
                 const currentStep = steps[step];
-                
                 if (idx === currentStep.correct) {
                     setFeedback({ type: 'success', text: 'Tepat sekali! Luar biasa!' });
                     setTimeout(() => {
@@ -269,140 +672,18 @@
         };
 
         // ==========================================
-        // 4. QUIZ ENGINE (Assessment Engine)
-        // ==========================================
-        const QuizEngine = ({ subject, onComplete, onExit }) => {
-            const [questions, setQuestions] = useState([]);
-            const [currentIdx, setCurrentIdx] = useState(0);
-            const [answers, setAnswers] = useState({});
-            const [isFinished, setIsFinished] = useState(false);
-            const [results, setResults] = useState(null);
-
-            useEffect(() => {
-                setQuestions(generateDynamicQuiz(subject));
-                setTimeout(() => lucide.createIcons(), 50);
-            }, [subject]);
-
-            const handleAnswer = (optIdx) => {
-                setAnswers(prev => ({ ...prev, [currentIdx]: optIdx }));
-                if (currentIdx < questions.length - 1) {
-                    setTimeout(() => setCurrentIdx(currentIdx + 1), 300);
-                }
-            };
-
-            const finishQuiz = () => {
-                let correct = 0;
-                questions.forEach((q, idx) => {
-                    if (answers[idx] === q.correct) correct++;
-                });
-                
-                let score = Math.round((correct / questions.length) * 100);
-                let strength = score > 50 ? "Pemahaman Dasar Kuat" : "Kecepatan Analisis";
-                let weakness = score < 100 ? "Soal Penalaran Non-Rutin (R4)" : "Tidak ada";
-                
-                const finalResultData = { score, correct, total: questions.length, strength, weakness, subject };
-                
-                // Simpan ke localStorage agar Dashboard langsung terupdate secara real
-                const existingHistory = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
-                existingHistory.push(finalResultData);
-                localStorage.setItem('aqsa_quiz_history', JSON.stringify(existingHistory));
-
-                setResults(finalResultData);
-                setIsFinished(true);
-                confetti({ particleCount: 120, spread: 80 });
-            };
-
-            if (questions.length === 0) return <div className="p-8 text-center font-bold text-slate-500">Menyiapkan 25 soal dinamis...</div>;
-
-            if (isFinished) {
-                return (
-                    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 fade-in">
-                        <div className="bg-white max-w-2xl w-full rounded-[2rem] shadow-xl p-8 border border-slate-100 text-center">
-                            <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-4">
-                                <i data-lucide="award" className="w-10 h-10 text-emerald-600"></i>
-                            </div>
-                            <h2 className="text-3xl font-display font-bold text-slate-800 mb-2">Evaluasi Selesai!</h2>
-                            <p className="text-slate-500 mb-8">Hasil kinerjamu telah direkam ke dalam sistem analitik.</p>
-                            
-                            <div className="grid grid-cols-3 gap-4 mb-8">
-                                <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                                    <span className="text-xs font-bold text-blue-500 uppercase">Skor</span>
-                                    <div className="text-3xl font-black text-blue-700">{results.score}</div>
-                                </div>
-                                <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                                    <span className="text-xs font-bold text-emerald-500 uppercase">Benar</span>
-                                    <div className="text-3xl font-black text-emerald-700">{results.correct} / {results.total}</div>
-                                </div>
-                                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
-                                    <span className="text-xs font-bold text-amber-500 uppercase">Akurasi</span>
-                                    <div className="text-3xl font-black text-amber-700">{results.score}%</div>
-                                </div>
-                            </div>
-
-                            <button onClick={onComplete} className="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-900 transition-colors">Kembali ke Dashboard</button>
-                        </div>
-                    </div>
-                );
-            }
-
-            const q = questions[currentIdx];
-
-            return (
-                <div className="min-h-screen bg-slate-50 flex flex-col">
-                    <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0">
-                        <div className="flex items-center gap-3">
-                            <button onClick={onExit} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><i data-lucide="x" className="w-4 h-4"></i></button>
-                            <span className="font-bold text-slate-700">{subject.toUpperCase()} Evaluation (25 Soal)</span>
-                        </div>
-                        <div className="font-mono font-bold bg-slate-100 px-4 py-2 rounded-lg text-slate-600">Soal {currentIdx + 1} / {questions.length}</div>
-                    </header>
-                    <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center slide-up">
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
-                            <div className="flex gap-2 mb-6">
-                                <span className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 text-slate-500 rounded uppercase">{q.category}</span>
-                                <span className="text-[10px] font-bold px-2.5 py-1 bg-purple-50 text-purple-600 rounded uppercase border border-purple-100">{q.reasoning}</span>
-                            </div>
-                            <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-8 leading-relaxed">{q.question}</h2>
-                            <div className="space-y-3">
-                                {q.options.map((opt, idx) => (
-                                    <button key={idx} onClick={() => handleAnswer(idx)}
-                                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all group flex items-start gap-4 ${answers[currentIdx] === idx ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                        <div className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center mt-0.5 ${answers[currentIdx] === idx ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
-                                            {answers[currentIdx] === idx && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                                        </div>
-                                        <span className={`text-base font-medium ${answers[currentIdx] === idx ? 'text-blue-900' : 'text-slate-700'}`}>{opt}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="mt-6 flex justify-between">
-                            <button onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0} className="px-6 py-3 font-bold text-slate-600 disabled:opacity-50">Sebelumnya</button>
-                            {currentIdx === questions.length - 1 ? (
-                                <button onClick={finishQuiz} className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg hover:bg-emerald-700">Selesai Ujian</button>
-                            ) : (
-                                <button onClick={() => setCurrentIdx(currentIdx + 1)} className="px-8 py-3 bg-slate-800 text-white font-bold rounded-2xl shadow-lg hover:bg-slate-900">Selanjutnya</button>
-                            )}
-                        </div>
-                    </main>
-                </div>
-            );
-        };
-
-        // ==========================================
-        // 5. STUDENT DASHBOARD (CLEAN INITIAL STATE)
+        // 6. STUDENT DASHBOARD
         // ==========================================
         const StudentDashboard = ({ onStartQuiz, onStartLearning, onLogout }) => {
             const [activeMenu, setActiveMenu] = useState('Dashboard');
             const history = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
             const hasCompletedAny = history.length > 0;
 
-            // Jika belum ada riwayat, skor dan penguasaan tampil 0 (Blank)
             const overallScore = hasCompletedAny ? Math.round(history.reduce((acc, curr) => acc + curr.score, 0) / history.length) : 0;
             const competencyVals = {
                 math: history.filter(h => h.subject === 'math').length > 0 ? 82 : 0,
                 science: history.filter(h => h.subject === 'science').length > 0 ? 75 : 0,
                 english: history.filter(h => h.subject === 'english').length > 0 ? 90 : 0,
-                logic: 0, biology: 0, grammar: 0
             };
             
             useEffect(() => { lucide.createIcons(); }, [activeMenu, history]);
@@ -462,7 +743,7 @@
                                         <h3 className="font-bold text-slate-800 mb-6">Tren Evaluasi</h3>
                                         {hasCompletedAny ? (
                                             <div className="flex items-end justify-between h-32 pb-2 gap-2">
-                                                {history.map((h, i) => (
+                                                {history.slice(-6).map((h, i) => (
                                                     <div key={i} className="flex flex-col items-center flex-1">
                                                         <span className="text-[10px] font-bold text-slate-400 mb-1">{h.score}</span>
                                                         <div className="w-full max-w-[32px] bg-blue-50 rounded-t-lg relative h-full">
@@ -534,8 +815,8 @@
             );
         };
 
-        // ==========================================
-        // 6. ADMIN DASHBOARD (CLEAN INITIAL STATE)
+        //        // ==========================================
+        // 7. ADMIN DASHBOARD
         // ==========================================
         const AdminDashboard = ({ onLogout }) => {
             const [activeMenu, setActiveMenu] = useState('Overview');
@@ -686,8 +967,8 @@
             );
         };
 
-        // ==========================================
-        // 7. MAIN APP ROUTER
+        //        // ==========================================
+        // 8. MAIN APP ROUTER
         // ==========================================
         const App = () => {
             const [userRole, setUserRole] = useState(null);
