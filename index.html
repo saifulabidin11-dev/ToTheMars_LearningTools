@@ -469,18 +469,9 @@
 
             // Calculate difficulty breakdown
             const difficultyVals = {
-                low: hasCompletedAny ? Math.min(100, overallScore + 18) : 0,
-                mid: hasCompletedAny ? Math.min(100, overallScore + 2) : 0,
-                high: hasCompletedAny ? Math.max(0, overallScore - 15) : 0,
-            };
-
-            const benchmarkVals = {
-                kmnr: hasCompletedAny ? Math.min(100, competencyVals.math + 2) : 0,
-                ksnr: hasCompletedAny ? Math.min(100, competencyVals.science + 4) : 0,
-                iklc: hasCompletedAny ? Math.max(0, competencyVals.english - 3) : 0,
-                osi: hasCompletedAny ? Math.min(100, Math.round((competencyVals.math + competencyVals.science + competencyVals.english)/3) + 5) : 0,
-                ef: hasCompletedAny ? competencyVals.english : 0,
-                cambridge: hasCompletedAny ? Math.max(0, overallScore - 2) : 0,
+                low: hasCompletedAny ? overallScore : 0,
+                mid: hasCompletedAny ? (overallScore > 0 ? Math.max(0, overallScore - 5) : 0) : 0,
+                high: hasCompletedAny ? (overallScore > 0 ? Math.max(0, overallScore - 15) : 0) : 0,
             };
 
             const getStrongestSubject = () => {
@@ -556,28 +547,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Pemetaan Standar Benchmark */}
-                                    <h3 className="font-bold text-slate-800 font-display text-lg mb-4 mt-8"><i className="fa-solid fa-medal text-amber-500 mr-2"></i>Pemetaan Standar Kompetisi & Sertifikasi</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                                        {[
-                                            { label: "KMNR", sub: "Math Logic", val: benchmarkVals.kmnr, color: "text-blue-600", bg: "bg-blue-50", icon: "fa-calculator" },
-                                            { label: "KSNR", sub: "Science", val: benchmarkVals.ksnr, color: "text-emerald-600", bg: "bg-emerald-50", icon: "fa-flask" },
-                                            { label: "IKLC", sub: "English", val: benchmarkVals.iklc, color: "text-rose-600", bg: "bg-rose-50", icon: "fa-language" },
-                                            { label: "OSI", sub: "Omni Sains", val: benchmarkVals.osi, color: "text-purple-600", bg: "bg-purple-50", icon: "fa-atom" },
-                                            { label: "EF", sub: "English First", val: benchmarkVals.ef, color: "text-pink-600", bg: "bg-pink-50", icon: "fa-comment-dots" },
-                                            { label: "Cambridge", sub: "Global Std", val: benchmarkVals.cambridge, color: "text-indigo-600", bg: "bg-indigo-50", icon: "fa-globe" }
-                                        ].map((item, i) => (
-                                            <div key={i} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center hover:-translate-y-1 transition transform">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${item.bg} ${item.color}`}>
-                                                    <i className={`fa-solid ${item.icon}`}></i>
-                                                </div>
-                                                <span className="text-sm font-bold text-slate-800 leading-none">{item.label}</span>
-                                                <span className="text-[9px] text-slate-400 mt-1 mb-3 uppercase tracking-wider">{item.sub}</span>
-                                                <div className={`text-xl font-black ${item.color}`}>{item.val}%</div>
-                                            </div>
-                                        ))}
-                                    </div>
-
                                     {/* Kesimpulan Komprehensif */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
@@ -616,31 +585,31 @@
                                         </div>
                                     </div>
 
-                                    <h3 className="font-bold text-slate-800 font-display text-lg mb-4 mt-8"><i className="fa-solid fa-chart-pie text-blue-500 mr-2"></i>Detail Penguasaan Kompetensi</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <h3 className="font-bold text-slate-800 font-display text-lg mb-4 mt-8"><i className="fa-solid fa-chart-pie text-blue-500 mr-2"></i>Detail Penguasaan & Pemetaan Sertifikasi</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                         {[
                                             { 
                                                 label: "Mathematics", score: competencyVals.math, color: "#3b82f6", icon: "fa-calculator",
                                                 subs: [
-                                                    { name: "Numerik & Aritmetika", val: competencyVals.math > 0 ? Math.min(100, competencyVals.math + 5) : 0 },
-                                                    { name: "Logika & Pemecahan Masalah", val: competencyVals.math > 0 ? Math.max(0, competencyVals.math - 2) : 0 },
-                                                    { name: "Geometri & Pengukuran", val: competencyVals.math }
+                                                    { name: "KMNR (Math Logic)", val: competencyVals.math },
+                                                    { name: "Numerik & Aritmetika", val: competencyVals.math },
+                                                    { name: "Logika Spasial", val: competencyVals.math }
                                                 ]
                                             },
                                             { 
                                                 label: "Science", score: competencyVals.science, color: "#10b981", icon: "fa-flask",
                                                 subs: [
-                                                    { name: "Makhluk Hidup", val: competencyVals.science > 0 ? Math.min(100, competencyVals.science + 3) : 0 },
-                                                    { name: "Materi & Energi", val: competencyVals.science },
-                                                    { name: "Bumi & Alam Semesta", val: competencyVals.science > 0 ? Math.max(0, competencyVals.science - 4) : 0 }
+                                                    { name: "KSNR (Sains Nasional)", val: competencyVals.science },
+                                                    { name: "OSI (Omni Sains)", val: competencyVals.science },
+                                                    { name: "Materi & Makhluk Hidup", val: competencyVals.science }
                                                 ]
                                             },
                                             { 
                                                 label: "English", score: competencyVals.english, color: "#f43f5e", icon: "fa-globe",
                                                 subs: [
-                                                    { name: "Vocabulary & Phonics", val: competencyVals.english > 0 ? Math.min(100, competencyVals.english + 4) : 0 },
-                                                    { name: "Grammar & Structure", val: competencyVals.english > 0 ? Math.max(0, competencyVals.english - 5) : 0 },
-                                                    { name: "Logic & Comprehension", val: competencyVals.english }
+                                                    { name: "IKLC", val: competencyVals.english },
+                                                    { name: "EF (English First)", val: competencyVals.english },
+                                                    { name: "Cambridge (Global Std)", val: competencyVals.english }
                                                 ]
                                             }
                                         ].map((item, i) => (
@@ -665,6 +634,11 @@
                                                                 <div className="h-full rounded-full transition-all duration-1000" style={{width: `${sub.val}%`, backgroundColor: item.color}}></div>
                                                             </div>
                                                         </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                                     ))}
                                                 </div>
                                             </div>
