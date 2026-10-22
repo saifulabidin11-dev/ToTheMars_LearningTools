@@ -74,7 +74,9 @@
             return newArr;
         };
 
-        const generateDynamicQuiz = (subjectKey) => {
+        const generateDynamicQuiz = (subjectKey, studentName) => {
+            const historyKey = `used_qs_${studentName}_${subjectKey}`;
+            let usedIds = JSON.parse(localStorage.getItem(historyKey) || "[]");
             const namesM = ["Andi", "Budi", "Dodi", "Edo", "Fandi", "Rafa", "Vano", "Dion"];
             const namesF = ["Ria", "Siti", "Nala", "Lina", "Tini", "Dina", "Amara", "Vega"];
             const fruitsID = ["apel", "jeruk", "mangga", "pisang", "stroberi"];
@@ -82,7 +84,15 @@
             
             let originalQuestions = dbQuestions[subjectKey] || dbQuestions.math_kmnr;
             
-            let shuffledPool = shuffleArray(originalQuestions);
+            let availableQuestions = originalQuestions.filter(q => !usedIds.includes(q.id));
+            if (availableQuestions.length < 25) {
+                console.log("Pool exhausted for", subjectKey, "- resetting session tracking.");
+                usedIds = [];
+                localStorage.setItem(historyKey, "[]");
+                availableQuestions = [...originalQuestions];
+            }
+            
+            let shuffledPool = shuffleArray(availableQuestions);
             let selectedRaw = shuffledPool.slice(0, 25);
             let finalQuestions = [];
 
@@ -208,9 +218,9 @@
             const [isScratchpadOpen, setScratchpadOpen] = useState(false);
 
             useEffect(() => {
-                const dynamicQuestions = generateDynamicQuiz(subject);
+                const dynamicQuestions = generateDynamicQuiz(subject, studentName);
                 setQuestions(dynamicQuestions);
-            }, [subject]);
+            }, [subject, studentName]);
 
             const handleAnswer = (optIdx) => {
                 setAnswers(prev => ({ ...prev, [currentIdx]: optIdx }));
@@ -244,6 +254,11 @@
                 const maxPossibleRaw = questions.length * 4;
                 let normalizedScore = Math.max(0, Math.round((rawScore / maxPossibleRaw) * 100));
                 if(isNaN(normalizedScore)) normalizedScore = 0;
+
+                const historyKey = `used_qs_${studentName}_${subject}`;
+                let currentUsedIds = JSON.parse(localStorage.getItem(historyKey) || "[]");
+                let newUsedIds = questions.map(q => q.id);
+                localStorage.setItem(historyKey, JSON.stringify([...currentUsedIds, ...newUsedIds]));
 
                 const finalResultData = { 
                     score: normalizedScore, 
@@ -480,6 +495,12 @@
                             .delete()
                             .ilike('student_name', studentName);
                         if (error) throw error;
+                        
+                        // Clear session tracking logic
+                        Object.keys(dbQuestions).forEach(subj => {
+                            localStorage.removeItem(`used_qs_${studentName}_${subj}`);
+                        });
+                        
                         setHistory([]);
                     } catch (err) {
                         alert("Gagal reset data: " + err.message);
