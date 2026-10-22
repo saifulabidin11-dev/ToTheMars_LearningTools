@@ -238,16 +238,14 @@
                     date: new Date().toLocaleDateString()
                 };
 
-                // 1. Simpan ke LocalStorage
-                const existingHistory = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
-                existingHistory.push(finalResultData);
-                localStorage.setItem('aqsa_quiz_history', JSON.stringify(existingHistory));
+                // Hapus penyimpanan lokal (agar fully cloud-based sync)
+                // localStorage.setItem('aqsa_quiz_history', ...);
 
-                // 2. Simpan ke SUPABASE DATABASE (DENGAN ALERT ERROR)
+                // 2. Simpan ke SUPABASE DATABASE
                 try {
                     const { data, error } = await supabase.from('quiz_history').insert([
                         { 
-                            subject: subject, 
+                            subject: subject.toLowerCase(), 
                             score: normalizedScore, 
                             raw_score: rawScore 
                         }
@@ -453,11 +451,36 @@
         // ==========================================
         const StudentDashboard = ({ onStartQuiz, onLogout }) => {
             const [activeMenu, setActiveMenu] = useState('Dashboard');
-            const history = JSON.parse(localStorage.getItem('aqsa_quiz_history')) || [];
+            const [history, setHistory] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+
+            // Fetch History dari Supabase
+            useEffect(() => {
+                const fetchHistory = async () => {
+                    try {
+                        const { data, error } = await supabase
+                            .from('quiz_history')
+                            .select('id, subject, score, created_at')
+                            .order('created_at', { ascending: false });
+                        
+                        if (error) {
+                            console.error("Error fetching data:", error);
+                        } else {
+                            setHistory(data || []);
+                        }
+                    } catch (err) {
+                        console.error("Fetch error:", err);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                fetchHistory();
+            }, [activeMenu]);
+
             const hasCompletedAny = history.length > 0;
 
             const calcScore = (subj) => {
-                const subjHist = history.filter(h => h.subject === subj);
+                const subjHist = history.filter(h => h.subject.toLowerCase() === subj.toLowerCase());
                 if (subjHist.length === 0) return 0;
                 return Math.round(subjHist.reduce((acc, curr) => acc + curr.score, 0) / subjHist.length);
             };
@@ -516,7 +539,7 @@
                                         <div>
                                             <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-800 mb-2">Halo, Aqsa! <span className="text-2xl">👋</span></h1>
                                             <p className="text-slate-500 text-sm max-w-md">
-                                                {hasCompletedAny ? `Kemampuan analisismu semakin tajam. Skor rata-rata keseluruhanmu saat ini adalah ${overallScore}.` : "Selamat datang di Platform Akademik. Mari mulai evaluasi pertamamu!"}
+                                                {isLoading ? "Memuat data nilai dari cloud..." : hasCompletedAny ? `Kemampuan analisismu semakin tajam. Skor rata-rata keseluruhanmu saat ini adalah ${overallScore}.` : "Selamat datang di Platform Akademik. Mari mulai evaluasi pertamamu!"}
                                             </p>
                                         </div>
                                         <div className="w-24 h-24 shrink-0 rounded-full border-4 border-emerald-100 bg-emerald-50 flex flex-col items-center justify-center">
@@ -592,35 +615,35 @@
                                         </button>
                                     </div>
 
-                                    <h3 className="font-bold text-slate-800 mb-4 font-display">Riwayat Ujian Tersimpan</h3>
+                                    <h3 className="font-bold text-slate-800 mb-4 font-display">Riwayat Ujian (Cloud)</h3>
                                     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                                        {hasCompletedAny ? (
+                                        {isLoading ? (
+                                            <div className="p-8 text-center text-slate-400 italic">Memuat data dari database...</div>
+                                        ) : hasCompletedAny ? (
                                             <table className="w-full text-left text-sm">
                                                 <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
                                                     <tr>
-                                                        <th className="px-4 py-3">Tanggal</th>
+                                                        <th className="px-4 py-3">Tanggal Waktu</th>
                                                         <th className="px-4 py-3">Subjek</th>
-                                                        <th className="px-4 py-3">Benar</th>
-                                                        <th className="px-4 py-3">Salah</th>
-                                                        <th className="px-4 py-3">Kosong</th>
                                                         <th className="px-4 py-3 text-right">Skor (100)</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {history.slice().reverse().map((h, i) => (
-                                                        <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                                                            <td className="px-4 py-3 text-slate-500">{h.date}</td>
-                                                            <td className="px-4 py-3 font-semibold uppercase">{h.subject}</td>
-                                                            <td className="px-4 py-3 text-emerald-600 font-bold">{h.correct}</td>
-                                                            <td className="px-4 py-3 text-rose-600 font-bold">{h.wrong}</td>
-                                                            <td className="px-4 py-3 text-amber-600 font-bold">{h.blank}</td>
-                                                            <td className="px-4 py-3 text-right font-black text-slate-800">{h.score}</td>
-                                                        </tr>
-                                                    ))}
+                                                    {history.map((h, i) => {
+                                                        const dateObj = new Date(h.created_at);
+                                                        const dateStr = dateObj.toLocaleDateString('id-ID') + ' ' + dateObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                                                        return (
+                                                            <tr key={h.id || i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                                                                <td className="px-4 py-3 text-slate-500">{dateStr}</td>
+                                                                <td className="px-4 py-3 font-semibold uppercase">{h.subject}</td>
+                                                                <td className="px-4 py-3 text-right font-black text-slate-800">{h.score}</td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </table>
                                         ) : (
-                                            <div className="p-8 text-center text-slate-400 italic">Belum ada riwayat ujian.</div>
+                                            <div className="p-8 text-center text-slate-400 italic">Belum ada riwayat ujian tersimpan di cloud.</div>
                                         )}
                                     </div>
                                 </div>
@@ -639,7 +662,7 @@
                                         <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                                             <div>
                                                 <div className="font-bold text-slate-800">Koneksi Supabase</div>
-                                                <div className="text-xs text-emerald-500 font-bold"><i className="fa-solid fa-circle text-[8px] mr-1"></i> Terhubung (Active)</div>
+                                                <div className="text-xs text-emerald-500 font-bold"><i className="fa-solid fa-circle text-[8px] mr-1"></i> Terhubung (Cloud Sync Active)</div>
                                             </div>
                                         </div>
                                         <div className="pt-2">
