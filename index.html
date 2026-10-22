@@ -185,7 +185,7 @@
         // ==========================================
         // QUIZ ENGINE (Hanya Evaluasi)
         // ==========================================
-        const QuizEngine = ({ subject, onComplete, onExit }) => {
+        const QuizEngine = ({ studentName, subject, onComplete, onExit }) => {
             const [questions, setQuestions] = useState([]);
             const [currentIdx, setCurrentIdx] = useState(0);
             const [answers, setAnswers] = useState({});
@@ -246,6 +246,7 @@
                 try {
                     const { data, error } = await supabase.from('quiz_history').insert([
                         { 
+                            student_name: studentName, // NEW COLUMN MUST EXIST IN SUPABASE
                             subject: subject.toLowerCase(), 
                             score: normalizedScore, 
                             raw_score: rawScore 
@@ -253,7 +254,7 @@
                     ]).select();
                     
                     if (error) {
-                        alert("GAGAL MENGIRIM KE CLOUD: " + error.message);
+                        alert("ERROR SUPABASE! Pastikan Anda sudah membuat kolom 'student_name' bertipe text di tabel quiz_history. Pesan error asli: " + error.message);
                     }
                 } catch (err) {
                     alert("KONEKSI CLOUD TERPUTUS: " + err.message);
@@ -275,7 +276,7 @@
                                     <i className="fa-solid fa-trophy text-4xl text-emerald-600"></i>
                                 </div>
                                 <h2 className="text-3xl font-display font-bold text-slate-800 mb-2">Evaluasi Selesai!</h2>
-                                <p className="text-slate-500 mb-6">Berikut adalah hasil evaluasi komprehensif kamu.</p>
+                                <p className="text-slate-500 mb-6">Berikut adalah hasil evaluasi komprehensif untuk {studentName}.</p>
                                 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                                     <div className="bg-blue-600 text-white p-4 rounded-2xl shadow-md">
@@ -428,7 +429,7 @@
         // ==========================================
         // STUDENT DASHBOARD
         // ==========================================
-        const StudentDashboard = ({ onStartQuiz, onLogout }) => {
+        const StudentDashboard = ({ studentName, onStartQuiz, onLogout }) => {
             const [activeMenu, setActiveMenu] = useState('Dashboard');
             const [history, setHistory] = useState([]);
             const [isLoading, setIsLoading] = useState(true);
@@ -438,10 +439,15 @@
                     try {
                         const { data, error } = await supabase
                             .from('quiz_history')
-                            .select('id, subject, score, created_at')
+                            .select('id, subject, score, created_at, student_name')
+                            .ilike('student_name', studentName) // FETCH DATA ONLY FOR LOGGED IN STUDENT
                             .order('created_at', { ascending: false });
                         
-                        if (!error) setHistory(data || []);
+                        if (!error) {
+                            setHistory(data || []);
+                        } else {
+                            console.log("Supabase fetch error. Ignore jika belum buat kolom student_name", error);
+                        }
                     } catch (err) {
                         console.error(err);
                     } finally {
@@ -449,7 +455,7 @@
                     }
                 };
                 fetchHistory();
-            }, [activeMenu]);
+            }, [activeMenu, studentName]);
 
             const hasCompletedAny = history.length > 0;
 
@@ -490,7 +496,7 @@
             };
 
             const narrativeText = hasCompletedAny
-                ? `Berdasarkan riwayat evaluasi, progres akademik Aqsa secara keseluruhan berada pada tingkat ${overallScore >= 80 ? 'Sangat Memuaskan' : overallScore >= 60 ? 'Berkembang Baik' : 'Perlu Perhatian'} dengan skor rata-rata ${overallScore}. Pemahaman pada konsep dasar (Low) mencapai proporsi ${difficultyVals.low}%. Penguasaan pada soal menengah dan aplikasi (Mid) berada di angka ${difficultyVals.mid}%, ${difficultyVals.high >= 90 ? 'dan sangat impresif dalam' : 'sementara ruang berkembang masih terlihat pada'} penyelesaian soal HOTS atau tingkat tinggi (High) yang saat ini berada di ${difficultyVals.high}%. Saat ini, subjek terkuat adalah ${getStrongestSubject()}, disarankan untuk terus berlatih pada ${getWeakestSubject()} guna meratakan kompetensi secara komprehensif.`
+                ? `Berdasarkan riwayat evaluasi, progres akademik ${studentName} secara keseluruhan berada pada tingkat ${overallScore >= 80 ? 'Sangat Memuaskan' : overallScore >= 60 ? 'Berkembang Baik' : 'Perlu Perhatian'} dengan skor rata-rata ${overallScore}. Pemahaman pada konsep dasar (Low) mencapai proporsi ${difficultyVals.low}%. Penguasaan pada soal menengah dan aplikasi (Mid) berada di angka ${difficultyVals.mid}%, ${difficultyVals.high >= 90 ? 'dan sangat impresif dalam' : 'sementara ruang berkembang masih terlihat pada'} penyelesaian soal HOTS atau tingkat tinggi (High) yang saat ini berada di ${difficultyVals.high}%. Saat ini, subjek terkuat adalah ${getStrongestSubject()}, disarankan untuk terus berlatih pada ${getWeakestSubject()} guna meratakan kompetensi secara komprehensif.`
                 : "Belum ada data evaluasi yang cukup untuk menarik kesimpulan. Silakan kerjakan beberapa ujian mandiri terlebih dahulu untuk melihat analisis komprehensif di sini.";
 
 
@@ -535,7 +541,7 @@
                                 <div className="p-6 md:p-8 space-y-6 fade-in">
                                     <div className="bg-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between border border-slate-100 shadow-sm gap-6">
                                         <div>
-                                            <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-800 mb-2">Halo, Aqsa! <span className="text-2xl">👋</span></h1>
+                                            <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-800 mb-2">Halo, {studentName}! <span className="text-2xl">👋</span></h1>
                                             <p className="text-slate-500 text-sm max-w-md">
                                                 {isLoading ? "Memuat data nilai dari cloud..." : hasCompletedAny ? `Kemampuan analisismu semakin tajam. Skor rata-rata keseluruhanmu saat ini adalah ${overallScore}.` : "Selamat datang di Platform Akademik. Mari mulai evaluasi pertamamu!"}
                                             </p>
@@ -546,7 +552,7 @@
                                         </div>
                                     </div>
 
-                                    <h3 className="font-bold text-slate-800 font-display text-lg mb-4"><i className="fa-solid fa-chart-pie text-blue-500 mr-2"></i>Detail Penguasaan & Pemetaan Sertifikasi</h3>
+                                    <h3 className="font-bold text-slate-800 font-display text-lg mb-4 mt-8"><i className="fa-solid fa-chart-pie text-blue-500 mr-2"></i>Detail Penguasaan & Pemetaan Sertifikasi</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                         {[
                                             { 
@@ -599,7 +605,9 @@
                                                 </div>
                                             </div>
                                         ))}
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                                    </div>
+
+                                    <div className="flex flex-col gap-6 mt-8">
                                         <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
                                             <h3 className="font-bold text-slate-800 mb-4 font-display text-lg"><i className="fa-solid fa-file-lines text-blue-500 mr-2"></i>Kesimpulan Komprehensif</h3>
                                             <p className="text-slate-600 leading-relaxed text-sm text-justify">
@@ -609,22 +617,23 @@
 
                                         <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
                                             <h3 className="font-bold text-slate-800 mb-4 font-display text-lg"><i className="fa-solid fa-layer-group text-purple-500 mr-2"></i>Penguasaan Tingkat Kesulitan</h3>
-                                            <div className="space-y-5 mt-6">
-                                                <div className="flex items-center gap-4">
+                                            
+                                            <div className="flex flex-col md:flex-row gap-6 mt-6">
+                                                <div className="flex-1 flex items-center gap-4">
                                                     <div className="w-16 font-bold text-slate-700 text-sm">Low</div>
                                                     <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
                                                         <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{width: `${difficultyVals.low}%`}}></div>
                                                     </div>
                                                     <div className="w-10 text-right font-bold text-emerald-600 text-sm">{difficultyVals.low}%</div>
                                                 </div>
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex-1 flex items-center gap-4">
                                                     <div className="w-16 font-bold text-slate-700 text-sm">Mid</div>
                                                     <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
                                                         <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{width: `${difficultyVals.mid}%`}}></div>
                                                     </div>
                                                     <div className="w-10 text-right font-bold text-blue-600 text-sm">{difficultyVals.mid}%</div>
                                                 </div>
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex-1 flex items-center gap-4">
                                                     <div className="w-16 font-bold text-slate-700 text-sm">High</div>
                                                     <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
                                                         <div className="h-full bg-rose-500 rounded-full transition-all duration-1000" style={{width: `${difficultyVals.high}%`}}></div>
@@ -632,10 +641,8 @@
                                                     <div className="w-10 text-right font-bold text-rose-600 text-sm">{difficultyVals.high}%</div>
                                                 </div>
                                             </div>
-                                            <p className="text-[10px] text-slate-400 mt-6 italic">*Low = Foundation (R1/R2), Mid = Standard (R3), High = Advanced (R4)</p>
+                                            <p className="text-[10px] text-slate-400 mt-6 italic text-center md:text-left">*Low = Foundation (R1/R2), Mid = Standard (R3), High = Advanced (R4)</p>
                                         </div>
-                                    </div>
-
                                     </div>
                                 </div>
                             )}
@@ -663,7 +670,7 @@
                                         </button>
                                     </div>
 
-                                    <h3 className="font-bold text-slate-800 mb-4 font-display">Riwayat Ujian (Cloud Sync)</h3>
+                                    <h3 className="font-bold text-slate-800 mb-4 font-display">Riwayat Ujian ({studentName})</h3>
                                     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                                         {isLoading ? (
                                             <div className="p-8 text-center text-slate-400 italic">Memuat data dari database...</div>
@@ -704,7 +711,7 @@
                                         <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                                             <div>
                                                 <div className="font-bold text-slate-800">Akun Siswa</div>
-                                                <div className="text-xs text-slate-500">Aqsa (Grade 1-2)</div>
+                                                <div className="text-xs text-slate-500">{studentName} (Multi-user Mode)</div>
                                             </div>
                                         </div>
                                         <div className="flex justify-between items-center pb-4 border-b border-slate-100">
@@ -715,7 +722,7 @@
                                         </div>
                                         <div className="pt-2">
                                             <button onClick={onLogout} className="w-full py-3 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold rounded-xl transition flex items-center justify-center gap-2">
-                                                <i className="fa-solid fa-right-from-bracket"></i> Keluar dari Aplikasi
+                                                <i className="fa-solid fa-right-from-bracket"></i> Ganti Akun / Logout
                                             </button>
                                         </div>
                                     </div>
@@ -728,57 +735,63 @@
         };
 
         // ==========================================
-        // ADMIN DASHBOARD
+        // LOGIN SCREEN (Multi-User)
         // ==========================================
-        const AdminDashboard = ({ onLogout }) => {
+        const LoginScreen = ({ onLogin }) => {
+            const [name, setName] = useState('');
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if(name.trim()) onLogin(name.trim());
+            };
             return (
-                <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 fade-in">
-                    <div className="bg-white rounded-[2rem] shadow-xl p-8 max-w-md w-full text-center border border-slate-200">
-                        <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
-                            <i className="fa-solid fa-screwdriver-wrench"></i>
+                <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4 fade-in">
+                    <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl max-w-md w-full text-center border border-slate-200">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+                            <i className="fa-solid fa-rocket text-2xl text-white"></i>
                         </div>
-                        <h2 className="text-2xl font-display font-bold text-slate-800 mb-2">Admin Dashboard</h2>
-                        <p className="text-slate-500 text-sm mb-8">Modul Admin dipindahkan ke service terpisah sesuai arsitektur. Data nilai siswa dapat dilihat langsung melalui Supabase Database.</p>
-                        <button onClick={onLogout} className="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-8 rounded-xl transition w-full">Kembali</button>
+                        <h1 className="text-3xl font-display font-bold text-slate-800 mb-2">To The Mars</h1>
+                        <p className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-10">Tools Learning (v4.0)</p>
+                        
+                        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-4 rounded-xl mb-6 text-left">
+                            <strong className="font-bold"><i className="fa-solid fa-circle-exclamation mr-1"></i> INFO PENTING!</strong><br/>
+                            Pastikan Anda sudah membuat kolom baru bernama <code className="bg-amber-200 px-1 rounded">student_name</code> (tipe: text) di tabel <b>quiz_history</b> Supabase Anda agar fitur multi-user ini berjalan lancar.
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <input 
+                                    type="text" 
+                                    placeholder="Masukkan Nama Kamu..." 
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold py-4 px-6 rounded-2xl text-center focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition shadow-lg transform hover:-translate-y-0.5">
+                                Mulai Belajar <i className="fa-solid fa-arrow-right ml-2"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
             );
-        };
+        }
 
         // ==========================================
         // MAIN APP ROUTER
         // ==========================================
         const App = () => {
-            const [userRole, setUserRole] = useState(null);
+            const [studentName, setStudentName] = useState(null);
             const [view, setView] = useState('DASHBOARD');
             const [selectedSubject, setSelectedSubject] = useState(null);
 
-            if (!userRole) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4 fade-in">
-                        <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-xl max-w-md w-full text-center border border-slate-200">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
-                                <i className="fa-solid fa-rocket text-2xl text-white"></i>
-                            </div>
-                            <h1 className="text-3xl font-display font-bold text-slate-800 mb-2">To The Mars</h1>
-                            <p className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-10">Tools Learning (v4.0)</p>
-                            <div className="space-y-4">
-                                <button onClick={() => setUserRole('STUDENT')} className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3">
-                                    <i className="fa-solid fa-user"></i> Masuk sebagai Siswa (Aqsa)
-                                </button>
-                                <button onClick={() => setUserRole('ADMIN')} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-3">
-                                    <i className="fa-solid fa-shield-halved"></i> Masuk sebagai Admin (Ortu)
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                );
+            if (!studentName) {
+                return <LoginScreen onLogin={(name) => setStudentName(name)} />;
             }
-
-            if (userRole === 'ADMIN') return <AdminDashboard onLogout={() => setUserRole(null)} />;
             
             if (view === 'QUIZ') {
                 return <QuizEngine 
+                    studentName={studentName}
                     subject={selectedSubject} 
                     onComplete={() => setView('DASHBOARD')} 
                     onExit={() => setView('DASHBOARD')} 
@@ -786,11 +799,12 @@
             }
 
             return <StudentDashboard 
+                studentName={studentName}
                 onStartQuiz={(subj) => { 
                     setSelectedSubject(subj); 
                     setView('QUIZ'); 
                 }} 
-                onLogout={() => setUserRole(null)} 
+                onLogout={() => { setStudentName(null); setView('DASHBOARD'); }} 
             />;
         };
 
