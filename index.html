@@ -82,20 +82,40 @@
             const fruitsID = ["apel", "jeruk", "mangga", "pisang", "stroberi"];
             const fruitsEN = ["apples", "oranges", "mangoes", "bananas", "grapes"];
             
-            let originalQuestions = dbQuestions[subjectKey] || dbQuestions.math_kmnr;
+            let rawPool = dbQuestions[subjectKey] || dbQuestions.math_kmnr;
             
-            let availableQuestions = originalQuestions.filter(q => !usedIds.includes(q.id));
-            if (availableQuestions.length < 25) {
-                console.log("Pool exhausted for", subjectKey, "- resetting session tracking.");
-                usedIds = [];
-                localStorage.setItem(historyKey, "[]");
-                availableQuestions = [...originalQuestions];
+            // 1. FILTER ANTI-DOBEL INTERNAL: Bersihkan duplikasi kloning dari database
+            let uniquePool = [];
+            let seenQuestions = new Set();
+            
+            for (let q of rawPool) {
+                let cleanQuestionKey = q.question.trim().toLowerCase();
+                if (!seenQuestions.has(cleanQuestionKey)) {
+                    seenQuestions.add(cleanQuestionKey);
+                    uniquePool.push(q);
+                }
             }
             
-            let shuffledPool = shuffleArray(availableQuestions);
-            let selectedRaw = shuffledPool.slice(0, 25);
-            let finalQuestions = [];
+            // 2. FILTER SESSION TRACKING: Pisahkan soal yang belum pernah dikerjakan
+            let availableQuestions = uniquePool.filter(q => !usedIds.includes(q.id));
+            
+            let selectedRaw = [];
+            if (availableQuestions.length >= 25) {
+                selectedRaw = shuffleArray(availableQuestions).slice(0, 25);
+            } else {
+                let remainingFresh = shuffleArray(availableQuestions);
+                let neededCount = 25 - remainingFresh.length;
+                
+                let freshIds = new Set(remainingFresh.map(q => q.id));
+                let recycledPool = uniquePool.filter(q => !freshIds.has(q.id));
+                let fillers = shuffleArray(recycledPool).slice(0, neededCount);
+                
+                localStorage.setItem(historyKey, "[]");
+                selectedRaw = shuffleArray([...remainingFresh, ...fillers]);
+            }
 
+            // 3. RANDOMISASI NAMA & POSISI OPSI (A, B, C, D)
+            let finalQuestions = [];
             selectedRaw.forEach(q => {
                 let v = Math.floor(Math.random() * 8);
                 let newQ = JSON.parse(JSON.stringify(q));
