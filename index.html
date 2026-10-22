@@ -465,6 +465,24 @@
                 fetchHistory();
             }, [activeMenu, studentName]);
 
+            const handleResetHistory = async () => {
+                if(window.confirm("Yakin ingin menghapus SEMUA riwayat ujian untuk " + studentName + "? Data yang dihapus tidak dapat dikembalikan.")) {
+                    setIsLoading(true);
+                    try {
+                        const { error } = await supabase
+                            .from('quiz_history')
+                            .delete()
+                            .ilike('student_name', studentName);
+                        if (error) throw error;
+                        setHistory([]);
+                    } catch (err) {
+                        alert("Gagal reset data: " + err.message);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                }
+            };
+
             const hasCompletedAny = history.length > 0;
 
             const calcExactScore = (exactSubj) => {
@@ -725,7 +743,8 @@
                                                 </thead>
                                                 <tbody>
                                                     {history.map((h, i) => {
-                                                        const dateObj = new Date(h.created_at);
+                                                        const dateStrRaw = h.created_at.includes('Z') || h.created_at.includes('+') ? h.created_at : h.created_at.replace(' ', 'T') + 'Z';
+                                                        const dateObj = new Date(dateStrRaw);
                                                         const dateStr = dateObj.toLocaleDateString('id-ID') + ' ' + dateObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
                                                         let cleanSubject = h.subject.replace('_', ' ').toUpperCase();
                                                         return (
@@ -761,8 +780,11 @@
                                                 <div className="text-xs text-emerald-500 font-bold"><i className="fa-solid fa-circle text-[8px] mr-1"></i> Terhubung (Cloud Sync Active)</div>
                                             </div>
                                         </div>
-                                        <div className="pt-2">
-                                            <button onClick={onLogout} className="w-full py-3 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold rounded-xl transition flex items-center justify-center gap-2">
+                                        <div className="pt-4 space-y-3">
+                                            <button onClick={handleResetHistory} className="w-full py-3 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-xl transition flex items-center justify-center gap-2 border border-red-100">
+                                                <i className="fa-solid fa-trash-can"></i> Hapus Seluruh Riwayat Ujian
+                                            </button>
+                                            <button onClick={onLogout} className="w-full py-3 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold rounded-xl transition flex items-center justify-center gap-2">
                                                 <i className="fa-solid fa-right-from-bracket"></i> Ganti Akun / Logout
                                             </button>
                                         </div>
