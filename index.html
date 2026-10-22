@@ -467,7 +467,6 @@
                 english: calcScore('english')
             };
 
-            // Calculate difficulty breakdown
             const difficultyVals = {
                 low: hasCompletedAny ? overallScore : 0,
                 mid: hasCompletedAny ? (overallScore > 0 ? Math.max(0, overallScore - 5) : 0) : 0,
@@ -547,7 +546,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Kesimpulan Komprehensif */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
                                             <h3 className="font-bold text-slate-800 mb-4 font-display text-lg"><i className="fa-solid fa-file-lines text-blue-500 mr-2"></i>Kesimpulan Komprehensif</h3>
@@ -634,11 +632,6 @@
                                                                 <div className="h-full rounded-full transition-all duration-1000" style={{width: `${sub.val}%`, backgroundColor: item.color}}></div>
                                                             </div>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
                                                     ))}
                                                 </div>
                                             </div>
