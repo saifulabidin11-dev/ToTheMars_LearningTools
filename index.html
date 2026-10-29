@@ -29,7 +29,8 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .bento-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 20px -4px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+        .bento-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 20px -4px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; cursor: pointer; }
+        .bento-card:hover { border-color: #cbd5e1; transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
         #scratchpad-canvas { cursor: crosshair; touch-action: none; }
     </style>
 </head>
@@ -39,1629 +40,15 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // ==========================================
         // CONFIG SUPABASE
-        // ==========================================
         const SUPABASE_URL = 'https://zttpjtkrgwgfmtybasfo.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0dHBqdGtyZ3dnZm10eWJhc2ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NDc3MDcsImV4cCI6MjEwODEyMzcwN30.Z_LNo2n1gvT31PyvgJ9ou815IBe6ghGFIg70vG5kAzc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ==========================================
-        // DATABASE SOAL
-        // ==========================================
-        const dbQuestions = {
-    "math_kmnr": [],
-    "math_numerik": [],
-    "math_spasial": [],
-    "science_ksnr": [],
-    "science_iksc": [
-        {
-            "id": "si_iksc_100_v3_1",
-            "category": "Legenda Sun & Moon (Korea)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di manakah letak rumah ibu dan kedua anaknya dalam legenda Sun and Moon dari Korea?",
-            "options": [
-                "Di dekat tepi hutan",
-                "Di atas puncak gunung",
-                "Di pinggir danau",
-                "Di padang pasir"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Di dekat tepi hutan.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_2",
-            "category": "Legenda Sun & Moon (Korea)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Benda apakah yang tanpa sengaja terjatuh dan hilang saat sang ibu lari ketakutan dari kejaran harimau?",
-            "options": [
-                "Sebuah selendang (scarf)",
-                "Keranjang buah",
-                "Sepatu",
-                "Topi"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Sebuah selendang (scarf).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_3",
-            "category": "Legenda Sun & Moon (Korea)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Bagaimanakah taktik licik sang harimau untuk menipu anak-anak agar mau membukakan pintu rumah?",
-            "options": [
-                "Ia memakai selendang ibu mereka",
-                "Ia berpura-pura menjadi tukang pos",
-                "Ia menawarkan permen",
-                "Ia membawa keranjang blackberry"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Ia memakai selendang ibu mereka.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_4",
-            "category": "Legenda Sun & Moon (Korea)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Bagaimana cara ajaib anak-anak tersebut bisa naik dari atas pohon menuju ke langit?",
-            "options": [
-                "Mereka memanjat sebuah tangga rahasia",
-                "Mereka diterbangkan oleh angin topan",
-                "Mereka menunggangi burung elang",
-                "Mereka melompat dari dahan tertinggi"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Mereka memanjat sebuah tangga rahasia.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_5",
-            "category": "Legenda Sun & Moon (Korea)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Setelah sampai di atas langit, menjelma menjadi benda angkasa apakah kedua anak tersebut?",
-            "options": [
-                "Matahari dan Bulan",
-                "Bintang dan Komet",
-                "Awan dan Hujan",
-                "Pelangi dan Petir"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Matahari dan Bulan.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_6",
-            "category": "Kehidupan Purba Sebelum Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Pada zaman dahulu sebelum mengenal peradaban modern, di manakah manusia purba biasanya berlindung dari cuaca dingin?",
-            "options": [
-                "Di dalam gua-gua alam",
-                "Di rumah pohon yang tinggi",
-                "Di dalam tenda daun",
-                "Di kastil batu pasir"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Di dalam gua-gua alam.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_7",
-            "category": "Kehidupan Purba Sebelum Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sebelum mereka belajar cara menyalakan api, bagaimana cara manusia purba mengolah daging hasil buruan agar lebih awet?",
-            "options": [
-                "Menjemurnya di bawah matahari hingga kering",
-                "Merebusnya dengan air sungai",
-                "Memendamnya di dalam lumpur panas",
-                "Membakarnya menggunakan sinar matahari"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Menjemurnya di bawah matahari hingga kering.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_8",
-            "category": "Kehidupan Purba Sebelum Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Berapa lamakah waktu yang dibutuhkan manusia purba untuk menjemur daging rusa hingga benar-benar kering dan awet?",
-            "options": [
-                "Empat minggu",
-                "Satu hari penuh",
-                "Enam bulan",
-                "Dua jam"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Empat minggu.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_9",
-            "category": "Kehidupan Purba Sebelum Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sebelum bisa melelehkan besi, bahan alam apakah yang digunakan manusia purba untuk membuat alat memancing dan berburu?",
-            "options": [
-                "Batu, kayu, dan tulang",
-                "Besi, baja, dan emas",
-                "Plastik, kaca, dan perunggu",
-                "Tanah liat, perak, dan kain"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Batu, kayu, dan tulang.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_10",
-            "category": "Kehidupan Purba Sebelum Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Dalam gambar kehidupan purba, hewan liar apakah yang paling membahayakan nyawa manusia saat berkeliaran di luar gua bersalju?",
-            "options": [
-                "Serigala (Wolf)",
-                "Singa laut",
-                "Kucing rumah",
-                "Burung camar"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Serigala (Wolf).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_11",
-            "category": "Penemuan & Pemanfaatan Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Menurut para ilmuwan, fenomena alam ekstrem apakah yang menjadi sumber pertama manusia purba mengenal api liar?",
-            "options": [
-                "Sambaran petir dan letusan gunung berapi",
-                "Gesekan antara awan mendung dan air",
-                "Angin kencang yang bergesekan dengan batu",
-                "Cahaya matahari yang terlalu terik di batu"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Sambaran petir dan letusan gunung berapi.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_12",
-            "category": "Penemuan & Pemanfaatan Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Setelah bertahun-tahun mencari tahu, bagaimana cara manusia purba pada akhirnya berhasil menyalakan api buatan sendiri?",
-            "options": [
-                "Dengan menggesekkan dua batu atau tongkat kayu kering",
-                "Dengan menggunakan kaca pembesar pada siang hari",
-                "Dengan membenturkan tulang hewan ke tanah liat",
-                "Dengan mencelupkan kayu ke dalam air panas"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Dengan menggesekkan dua batu atau tongkat kayu kering.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_13",
-            "category": "Penemuan & Pemanfaatan Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di masa industri awal, seorang pandai besi (ironsmith) sangat bergantung pada suhu api yang tinggi. Apakah tujuan utamanya memanaskan logam?",
-            "options": [
-                "Untuk melunakkan logam agar mudah ditempa menjadi alat",
-                "Untuk membakar kotoran yang menempel pada logam tua",
-                "Untuk mengubah logam biasa menjadi logam emas berkilau",
-                "Untuk menghancurkan pedang musuh menjadi debu"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Untuk melunakkan logam agar mudah ditempa menjadi alat.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_14",
-            "category": "Penemuan & Pemanfaatan Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Setelah pot tanah liat selesai dibentuk, mengapa pengrajin tembikar wajib memasukkan pot tersebut ke dalam oven pembakaran?",
-            "options": [
-                "Agar tanah liat mengeras secara permanen dan kedap air",
-                "Agar tanah liat tersebut menjadi elastis seperti karet",
-                "Agar warna tanah liat memudar menjadi putih",
-                "Agar tanah liat berbau harum sebelum dicat"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Agar tanah liat mengeras secara permanen dan kedap air.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_15",
-            "category": "Penemuan & Pemanfaatan Api",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Untuk mencairkan bongkahan pasir silika (kuarsa) menjadi bahan dasar botol bening, seorang pengrajin kaca mutlak memerlukan apa?",
-            "options": [
-                "Api perapian dengan suhu yang sangat ekstrem",
-                "Air es yang disiramkan secara perlahan",
-                "Sinar matahari yang dikumpulkan cermin",
-                "Pukulan palu besi yang terus menerus"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Api perapian dengan suhu yang sangat ekstrem.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_16",
-            "category": "Tata Surya (Planet Raksasa & Terluar)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Planet ini mendapat julukan sebagai planet raksasa gas terbesar di Tata Surya kita. Planet apakah itu?",
-            "options": [
-                "Jupiter",
-                "Saturnus",
-                "Uranus",
-                "Neptunus"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Jupiter.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_17",
-            "category": "Tata Surya (Planet Raksasa & Terluar)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sangat jauh dan dingin, planet berwarna biru gelap ini menempati urutan orbit paling luar dari Matahari. Apakah nama planet tersebut?",
-            "options": [
-                "Neptunus",
-                "Uranus",
-                "Saturnus",
-                "Jupiter"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Neptunus.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_18",
-            "category": "Tata Surya (Planet Raksasa & Terluar)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Selain ukurannya yang raksasa, planet ini sangat mudah dikenali karena memiliki badai pusaran bintik merah abadi. Planet apakah yang dimaksud?",
-            "options": [
-                "Jupiter",
-                "Mars",
-                "Venus",
-                "Saturnus"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Jupiter.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_19",
-            "category": "Tata Surya (Planet Raksasa & Terluar)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Planet apakah yang posisinya berada tepat di urutan kelima dari Matahari dan memisahkan kelompok planet berbatu dengan planet es?",
-            "options": [
-                "Jupiter",
-                "Mars",
-                "Saturnus",
-                "Uranus"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Jupiter.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_20",
-            "category": "Tata Surya (Planet Raksasa & Terluar)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Planet apakah yang memiliki cincin paling megah dan sangat luas jika diamati menggunakan teleskop luar angkasa?",
-            "options": [
-                "Saturnus",
-                "Uranus",
-                "Neptunus",
-                "Jupiter"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Saturnus.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_21",
-            "category": "Tata Surya (Planet Dalam & Benda Langit)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di antara semua anggota Tata Surya, planet manakah yang memiliki ukuran paling mungil dan berjarak terdekat dari Matahari?",
-            "options": [
-                "Merkurius",
-                "Venus",
-                "Pluto",
-                "Mars"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Merkurius.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_22",
-            "category": "Tata Surya (Planet Dalam & Benda Langit)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Benda angkasa apakah yang gravitasinya sangat besar sehingga posisinya selalu menjadi pusat putaran bagi seluruh planet?",
-            "options": [
-                "Matahari",
-                "Bulan",
-                "Komet",
-                "Bintang Sirius"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Matahari.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_23",
-            "category": "Tata Surya (Planet Dalam & Benda Langit)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Benda langit apakah yang secara terus menerus bergerak memutari (menjadi satelit alami) planet Bumi kita?",
-            "options": [
-                "Bulan",
-                "Matahari",
-                "Bintang",
-                "Asteroid"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bulan.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_24",
-            "category": "Tata Surya (Planet Dalam & Benda Langit)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Bulan terlihat bersinar sangat terang di malam hari, padahal ia bukan bintang. Dari manakah sumber cahaya Bulan tersebut?",
-            "options": [
-                "Memantulkan pancaran sinar dari Matahari",
-                "Menghasilkan api vulkanik di permukaannya",
-                "Memantulkan cahaya terang dari lampu di Bumi",
-                "Menyerap panas dari bintang-bintang sekitarnya"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Memantulkan pancaran sinar dari Matahari.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_25",
-            "category": "Tata Surya (Planet Dalam & Benda Langit)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Planet manakah yang menempati posisi urutan ketiga dari Matahari, tempat di mana terdapat kelimpahan air, oksigen, dan makhluk hidup?",
-            "options": [
-                "Bumi",
-                "Venus",
-                "Mars",
-                "Merkurius"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bumi.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_26",
-            "category": "Waktu & Perputaran Bumi",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Fenomena alam apakah yang pertama kali digunakan oleh manusia zaman dulu sebagai tanda untuk mulai mengukur dan membagi waktu?",
-            "options": [
-                "Pergantian datangnya siang dan malam",
-                "Perubahan bentuk awan",
-                "Terjadinya gerhana bulan",
-                "Datangnya musim salju"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Pergantian datangnya siang dan malam.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_27",
-            "category": "Waktu & Perputaran Bumi",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Siklus siang dan malam hari terjadi secara alami terus menerus. Pergerakan bumi apakah yang menyebabkan peristiwa ini?",
-            "options": [
-                "Rotasi (Bumi berputar pada porosnya sendiri)",
-                "Revolusi",
-                "Orbit",
-                "Gravitasi"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Rotasi (Bumi berputar pada porosnya sendiri).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_28",
-            "category": "Waktu & Perputaran Bumi",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Kehidupan manusia dipengaruhi oleh waktu tidur di malam hari dan bekerja di siang hari. Berapa jamkah waktu yang dihabiskan untuk 1 rotasi bumi?",
-            "options": [
-                "24 jam",
-                "12 jam",
-                "60 menit",
-                "30 jam"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: 24 jam.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_29",
-            "category": "Waktu & Perputaran Bumi",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Anna berangkat sekolah dan sarapan pada pukul 7 pagi. Jika ia pulang sekolah tepat pukul 12 siang, berapa lamakah Anna menghabiskan waktu di sekolah?",
-            "options": [
-                "5 jam",
-                "6 jam",
-                "4 jam",
-                "7 jam"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: 5 jam.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_30",
-            "category": "Waktu & Perputaran Bumi",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Apakah nama profesi bagi seorang ilmuwan yang secara khusus mendedikasikan ilmunya untuk mempelajari planet, bintang, dan pergerakan benda langit?",
-            "options": [
-                "Astronom (Astronomer)",
-                "Astronot",
-                "Ahli Fisika",
-                "Pilot"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Astronom (Astronomer).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_31",
-            "category": "Musim & Kalender",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Bumi tidak hanya berputar pada porosnya, tetapi juga mengelilingi Matahari secara perlahan. Dampak alamiah apa yang ditimbulkan dari pergerakan ini dalam setahun?",
-            "options": [
-                "Terjadinya pergantian empat musim (semi, panas, gugur, dingin)",
-                "Terjadinya perubahan wujud air laut menjadi gas uap",
-                "Terjadinya bencana badai salju di seluruh permukaan bumi",
-                "Terjadinya fenomena air pasang dan surut di lautan"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Terjadinya pergantian empat musim (semi, panas, gugur, dingin).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_32",
-            "category": "Musim & Kalender",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Dalam catatan astronomi dan penanggalan, berapakah jumlah hari yang tepat untuk bumi mengelilingi matahari dalam satu tahun kabisat khusus?",
-            "options": [
-                "366 hari",
-                "365 hari",
-                "364 hari",
-                "360 hari"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: 366 hari.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_33",
-            "category": "Musim & Kalender",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Liburan musim panas sangat ditunggu-tunggu oleh anak-anak di belahan bumi utara. Pada rentang bulan apakah puncak musim panas ini biasanya terjadi?",
-            "options": [
-                "Juni, Juli, dan Agustus",
-                "Maret, April, dan Mei",
-                "September, Oktober, dan November",
-                "Desember, Januari, dan Februari"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Juni, Juli, dan Agustus.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_34",
-            "category": "Musim & Kalender",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Musim gugur (autumn) terjadi ketika dedaunan berubah warna menjadi jingga kemerahan. Bulan apa sajakah yang umumnya masuk dalam musim gugur di belahan utara?",
-            "options": [
-                "September, Oktober, November",
-                "Maret, April, Mei",
-                "Juni, Juli, Agustus",
-                "Desember, Januari, Februari"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: September, Oktober, November.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_35",
-            "category": "Musim & Kalender",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Berdasarkan sistem kalender masehi yang kita gunakan sehari-hari secara global, ada berapakah jumlah total bulan dalam satu tahun penuh?",
-            "options": [
-                "12 bulan",
-                "10 bulan",
-                "6 bulan",
-                "24 bulan"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: 12 bulan.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_36",
-            "category": "Kanguru (Karakteristik Umum)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Kanguru adalah mamalia unik dari benua Australia. Apakah fungsi krusial dari keberadaan kantung (marsupial) di bagian perut kanguru betina?",
-            "options": [
-                "Sebagai tempat aman untuk merawat dan membesarkan bayinya (joey)",
-                "Sebagai tempat menyimpan cadangan makanan rumput kering",
-                "Sebagai tempat untuk menyimpan cadangan air hujan",
-                "Sebagai kantung bantalan pelindung saat melompat"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Sebagai tempat aman untuk merawat dan membesarkan bayinya (joey).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_37",
-            "category": "Kanguru (Karakteristik Umum)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Berdasarkan pengamatan pada bentuk rahang dan gigi serta makanannya di padang rumput liar, kanguru tergolong ke dalam kelompok hewan apa?",
-            "options": [
-                "Herbivora (Pemakan tumbuhan)",
-                "Karnivora (Pemakan daging mamalia)",
-                "Insektivora (Pemakan khusus serangga)",
-                "Omnivora (Pemakan segalanya bebas)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Herbivora (Pemakan tumbuhan).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_38",
-            "category": "Kanguru (Karakteristik Umum)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Untuk menghindari dan melarikan diri dari kejaran predator, kanguru mengandalkan organ fisik yang mana untuk melompat sangat tinggi dan cepat?",
-            "options": [
-                "Dua kaki belakangnya yang sangat besar dan berotot kuat",
-                "Ekornya yang digunakan seperti baling-baling helikopter",
-                "Dua kaki depannya yang dilatih untuk memukul",
-                "Kantung marsupialnya yang memantul di tanah"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Dua kaki belakangnya yang sangat besar dan berotot kuat.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_39",
-            "category": "Kanguru (Karakteristik Umum)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Bayi kanguru lahir dalam keadaan belum sempurna, buta, dan tidak berbulu. Apakah sebutan/nama khusus untuk bayi kanguru ini dalam bahasa Inggris?",
-            "options": [
-                "Joey",
-                "Pup",
-                "Cub",
-                "Calf"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Joey.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_40",
-            "category": "Kanguru (Karakteristik Umum)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Jika kita mencari habitat asli populasi hewan berkantung pelompat ini di peta dunia, ke negara manakah kita harus pergi?",
-            "options": [
-                "Australia",
-                "Afrika",
-                "Amerika Selatan",
-                "Eropa"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Australia.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_41",
-            "category": "Biologi Laut (Lumba-Lumba & Akuarium)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Aquarium besar (oceanarium) di kota biasanya memamerkan berbagai ikan eksotis laut. Secara bahasa, benda apakah sebenarnya akuarium itu?",
-            "options": [
-                "Wadah atau tangki kaca berisi air untuk memelihara hewan dan tumbuhan air",
-                "Danau buatan besar di tengah kota",
-                "Museum yang memamerkan kerangka fosil laut",
-                "Kolam renang air panas untuk pertunjukan"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Wadah atau tangki kaca berisi air untuk memelihara hewan dan tumbuhan air.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_42",
-            "category": "Biologi Laut (Lumba-Lumba & Akuarium)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Setiap jenis ikan memerlukan alat pernapasan khusus untuk menyerap oksigen yang terlarut di dalam air. Organ apakah yang digunakan ikan untuk bernapas?",
-            "options": [
-                "Insang (Gills)",
-                "Paru-paru",
-                "Jantung",
-                "Hati"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Insang (Gills).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_43",
-            "category": "Biologi Laut (Lumba-Lumba & Akuarium)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Meskipun memiliki sirip dan menghabiskan seluruh umurnya berenang di lautan, paus dan lumba-lumba tidak digolongkan sebagai ikan. Mengapa demikian?",
-            "options": [
-                "Karena mereka melahirkan anak dan menyusuinya (mamalia)",
-                "Karena mereka dapat berjalan di pasir pantai",
-                "Karena mereka memangsa hiu di perairan dalam",
-                "Karena mereka bernapas melalui kulit"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Karena mereka melahirkan anak dan menyusuinya (mamalia).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_44",
-            "category": "Biologi Laut (Lumba-Lumba & Akuarium)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Lumba-lumba adalah hewan laut cerdas yang suka melompat. Walau hidup di air laut dalam, menggunakan organ apakah mamalia ini bernapas?",
-            "options": [
-                "Paru-paru",
-                "Insang luar",
-                "Pori-pori kulit",
-                "Gelembung udara"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Paru-paru.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_45",
-            "category": "Biologi Laut (Lumba-Lumba & Akuarium)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sebuah mesin kecil harus selalu dihidupkan untuk menjaga ikan hias agar tidak mati di dalam akuarium kaca yang tertutup. Mesin mekanik apakah itu?",
-            "options": [
-                "Pompa udara atau aerator untuk menyuplai oksigen",
-                "Termometer pengukur suhu panas air",
-                "Pemanas pencair es",
-                "Kipas angin kecil pendingin ruangan kaca"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Pompa udara atau aerator untuk menyuplai oksigen.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_46",
-            "category": "Biologi Laut (Ubur-Ubur & Avertebrata)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di akuarium, pengunjung takjub melihat hewan transparan yang tidak memiliki otak, mata, maupun jantung. Hewan melayang apakah ini?",
-            "options": [
-                "Ubur-ubur (Jellyfish)",
-                "Bulu babi berduri (Sea Urchin)",
-                "Bintang laut (Starfish)",
-                "Ikan badut (Clownfish)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Ubur-ubur (Jellyfish).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_47",
-            "category": "Biologi Laut (Ubur-Ubur & Avertebrata)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Ubur-ubur merupakan avertebrata yang hanya mengandalkan jaring saraf sederhana. Karena tidak memiliki insang, dari manakah ia menyerap oksigen di dalam laut?",
-            "options": [
-                "Melalui seluruh permukaan kulit tubuhnya",
-                "Menelan gelembung udara ke kepalanya",
-                "Memakan rumput laut beroksigen",
-                "Berenang ke permukaan menarik napas"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Melalui seluruh permukaan kulit tubuhnya.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_48",
-            "category": "Biologi Laut (Ubur-Ubur & Avertebrata)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di antara avertebrata laut yang merayap lambat di dasar pasir, terdapat makhluk yang tubuhnya dipenuhi duri-duri hitam tajam sebagai perisai. Siapakah dia?",
-            "options": [
-                "Bulu babi laut (Sea urchin)",
-                "Bintang laut (Starfish)",
-                "Kuda laut (Seahorse)",
-                "Teripang (Sea cucumber)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bulu babi laut (Sea urchin).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_49",
-            "category": "Biologi Laut (Ubur-Ubur & Avertebrata)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sering terlihat merayap atau menempel pada dinding kaca akuarium, hewan lambat ini memiliki bentuk lima sisi yang identik seperti ornamen luar angkasa. Siapakah ia?",
-            "options": [
-                "Bintang laut (Starfish)",
-                "Gurita",
-                "Kuda laut",
-                "Bulu babi"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bintang laut (Starfish).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_50",
-            "category": "Biologi Laut (Ubur-Ubur & Avertebrata)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Saat berkunjung, anak-anak melihat ikan kecil berenang bergerombol. Ikan ini diberi nama ikan zebra (zebrafish) karena memiliki ciri fisik apa?",
-            "options": [
-                "Garis-garis horizontal beruntun (stripes) di sepanjang tubuhnya",
-                "Warna hitam putih menyala di malam hari",
-                "Memiliki empat kaki kecil",
-                "Memakan rumput laut mirip zebra"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Garis-garis horizontal beruntun (stripes) di sepanjang tubuhnya.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_51",
-            "category": "Biologi Laut (Ikan Buntal Beracun)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Ikan buntal (balloonfish) memiliki mekanisme pertahanan diri yang sangat unik saat bertemu predator. Apakah yang ia lakukan?",
-            "options": [
-                "Menelan air sangat banyak untuk menggembungkan badannya seperti bola",
-                "Mengeluarkan tinta hitam pekat",
-                "Berubah warna menyatu dengan pasir karang",
-                "Menyengat dengan aliran listrik"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Menelan air sangat banyak untuk menggembungkan badannya seperti bola.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_52",
-            "category": "Biologi Laut (Ikan Buntal Beracun)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Selain menggembungkan badannya agar tampak menakutkan, mengapa ikan buntal sangat ditakuti pemangsanya dan dilarang dimakan sembarangan?",
-            "options": [
-                "Karena organ tubuh dalamnya mengandung racun yang sangat mematikan",
-                "Karena memiliki sisik keras seperti batu karang",
-                "Karena durinya memancarkan listrik tinggi",
-                "Karena ukuran tubuhnya terlalu besar"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Karena organ tubuh dalamnya mengandung racun yang sangat mematikan.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_53",
-            "category": "Biologi Laut (Ikan Buntal Beracun)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di perairan Jepang, ikan buntal atau Fugu dihidangkan sebagai makanan mahal. Mengapa koki yang memotong ikan ini wajib memiliki lisensi dan keahlian tingkat tinggi?",
-            "options": [
-                "Untuk memisahkan kantung racunnya agar daging ikan aman dikonsumsi",
-                "Untuk memotong tulang rawan raksasanya",
-                "Untuk membuang sisiknya yang setajam pisau",
-                "Agar ikan tidak meledak saat dimasak"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Untuk memisahkan kantung racunnya agar daging ikan aman dikonsumsi.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_54",
-            "category": "Biologi Laut (Ikan Buntal Beracun)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Ketika ikan buntal sedang tidak dalam kondisi ketakutan atau merasa terancam bahaya, bagaimanakah ukuran dan wujud aslinya berenang?",
-            "options": [
-                "Ukurannya tergolong kecil dan kempes dengan sirip pendek",
-                "Tetap menggembung menakutkan sepanjang waktu",
-                "Berbentuk panjang mirip belut listrik",
-                "Sangat pipih melekat di dasar pasir"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Ukurannya tergolong kecil dan kempes dengan sirip pendek.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_55",
-            "category": "Biologi Laut (Ikan Buntal Beracun)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Meskipun ukurannya bisa menjadi besar bulat dan dipenuhi duri tajam saat terancam, apa makanan alami ikan buntal karnivora ini di lautan lepas?",
-            "options": [
-                "Keong, kerang keras, udang kecil, dan kepiting",
-                "Hanya memakan rumput laut ganggang",
-                "Paus kecil dan anjing laut",
-                "Ubur-ubur raksasa beracun"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Keong, kerang keras, udang kecil, dan kepiting.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_56",
-            "category": "Angin & Bencana",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Secara sederhana dalam ilmu sains cuaca dan iklim dunia, apakah yang sebenarnya dimaksud dengan fenomena angin (wind)?",
-            "options": [
-                "Pergerakan udara akibat adanya perbedaan suhu dan tekanan atmosfir",
-                "Pergerakan awan tebal dari darat ke laut",
-                "Uap air padat yang berputar di atmosfer",
-                "Udara hampa yang terjebak di pegunungan"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Pergerakan udara akibat adanya perbedaan suhu dan tekanan atmosfir.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_57",
-            "category": "Angin & Bencana",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Angin puting beliung berputar yang berbentuk corong panjang dan mampu menghancurkan rumah-rumah penduduk hingga rata dengan tanah dikenal dengan sebutan apa?",
-            "options": [
-                "Tornado",
-                "Tsunami",
-                "Banjir bandang",
-                "Gempa vulkanik"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Tornado.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_58",
-            "category": "Angin & Bencana",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Jika terjadi kebakaran alami akibat petir di hutan kering sabana, mengapa datangnya badai angin kencang justru sangat ditakuti oleh pasukan pemadam kebakaran?",
-            "options": [
-                "Karena angin memasok lebih banyak oksigen dan mendorong api menjalar cepat",
-                "Karena angin membawa hujan badai yang merusak peralatannya",
-                "Karena angin akan meniup api hingga padam seketika dan asapnya menebal",
-                "Karena angin kencang langsung mendinginkan udara menjadi es"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Karena angin memasok lebih banyak oksigen dan mendorong api menjalar cepat.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_59",
-            "category": "Angin & Bencana",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Selain merobohkan bangunan kayu, bahaya besar apakah yang sering kali ditimbulkan oleh amukan angin badai (hurricane) terhadap pepohonan tua dan rapuh di pinggir jalan?",
-            "options": [
-                "Tumbang merobohkan akar dan menimpa objek-objek di bawahnya",
-                "Mencabut buah-buahannya sehingga masyarakat kelaparan",
-                "Membuat pohon cepat kering lalu terbakar menjadi debu",
-                "Menumbuhkan benih pohon liar lebih ganas dalam semalam"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Tumbang merobohkan akar dan menimpa objek-objek di bawahnya.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_60",
-            "category": "Angin & Bencana",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di laut lepas, para pelaut zaman kuno sangat bergantung dan bersyukur ketika ada angin laut yang berhembus konstan. Apakah fungsi utama angin tersebut bagi pelaut kuno?",
-            "options": [
-                "Untuk meniup layar kapal mereka agar bergerak maju mengarungi perairan",
-                "Untuk mengusir burung camar yang bertengger di kapal",
-                "Untuk mendinginkan suhu geladak kayu kapal yang panas",
-                "Untuk menciptakan ombak besar agar ikan naik ke permukaan"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Untuk meniup layar kapal mereka agar bergerak maju mengarungi perairan.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_61",
-            "category": "Sifat Zat & Perubahan Wujud",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Air sangat penting bagi kelangsungan hidup ekosistem. Secara teori wujud materi sains, air keran yang kita minum sehari-hari berada dalam wujud apa?",
-            "options": [
-                "Zat cair (Liquid)",
-                "Zat padat (Solid)",
-                "Gas (Vapor)",
-                "Plasma"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Zat cair (Liquid).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_62",
-            "category": "Sifat Zat & Perubahan Wujud",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Ketika musim dingin mencapai suhu ekstrem minus nol derajat celcius, air hujan akan membeku dan jatuh ke tanah sebagai salju. Salju adalah air dalam wujud apa?",
-            "options": [
-                "Zat padat (Solid)",
-                "Zat cair (Liquid)",
-                "Gas (Vapor)",
-                "Kristal cair"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Zat padat (Solid).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_63",
-            "category": "Sifat Zat & Perubahan Wujud",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Ketika ibu merebus kuah sayur di panci tanpa penutup terlalu lama, airnya perlahan-lahan menyusut habis. Air mendidih tersebut sesungguhnya lenyap berubah menjadi wujud apa?",
-            "options": [
-                "Gas (Uap air / Vapor)",
-                "Benda padat beku",
-                "Cairan kental",
-                "Kristal es keras"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Gas (Uap air / Vapor).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_64",
-            "category": "Sifat Zat & Perubahan Wujud",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Air sirup yang dituangkan dari dalam botol panjang ke dalam gelas bulat seketika berubah penampilannya. Hal ini membuktikan bahwa zat cair memiliki sifat fisik utama apa?",
-            "options": [
-                "Bentuknya tidak tetap dan selalu berubah menyesuaikan dengan wadah tempatnya",
-                "Ukurannya akan cepat menyusut jika dipindah",
-                "Bisa ditarik panjang seperti benang lentur",
-                "Volume zat cair otomatis bertambah ganda"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bentuknya tidak tetap dan selalu berubah menyesuaikan dengan wadah tempatnya.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_65",
-            "category": "Sifat Zat & Perubahan Wujud",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Ibu memanaskan panci tebal berisi sekeping mentega beku. Tak lama mentega tersebut meleleh licin keemasan. Peristiwa transisi mencair ini disebabkan oleh paparan energi apa?",
-            "options": [
-                "Energi Panas (Kalor)",
-                "Energi Angin",
-                "Energi Cahaya Bulan",
-                "Energi Magnet Bumi"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Energi Panas (Kalor).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_66",
-            "category": "Lingkungan & Kelestarian",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Tindakan mendaur ulang (recycle) kardus bekas pengiriman menjadi bubur kertas kardus baru sangat penting bagi kelestarian alam. Hal ini dilakukan manusia untuk menekan tingginya angka apa?",
-            "options": [
-                "Limbah polusi sampah dan penebangan pohon",
-                "Penggunaan air tanah perumahan",
-                "Pengurangan jumlah kendaraan bermotor",
-                "Polusi suara di perkotaan padat"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Limbah polusi sampah dan penebangan pohon.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_67",
-            "category": "Lingkungan & Kelestarian",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Untuk menjaga kelestarian ekosistem sungai dan selokan kota, bahan limbah sisa dapur manakah yang sangat dilarang untuk dibuang sembarangan ke dalam pipa wastafel cucian piring?",
-            "options": [
-                "Sisa minyak goreng bekas atau jelantah panas",
-                "Air sabun cuci tangan yang sudah diencerkan",
-                "Sisa perasan air jeruk nipis",
-                "Garam dapur kotor yang sudah mencair"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Sisa minyak goreng bekas atau jelantah panas.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_68",
-            "category": "Lingkungan & Kelestarian",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Air tanah di bumi jumlahnya terbatas. Tindakan pencegahan cerdas apa yang paling sederhana dan bisa kita lakukan setiap pagi di wastafel kamar mandi untuk menghemat cadangan air bumi?",
-            "options": [
-                "Menutup keran air rapat-rapat saat kita sedang asyik menggosok gigi",
-                "Mandi menggunakan air hangat terus menerus",
-                "Menyiram dinding kamar mandi setiap hari",
-                "Membiarkan bak mandi meluber hingga penuh"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Menutup keran air rapat-rapat saat kita sedang asyik menggosok gigi.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_69",
-            "category": "Lingkungan & Kelestarian",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Daripada langsung membuang toples kaca selai ke tempat sampah, seorang anak merubahnya menjadi celengan koin bening yang estetik. Memakai ulang wadah seperti ini dikenal dengan gerakan lingkungan apa?",
-            "options": [
-                "Reuse (Menggunakan kembali tanpa dihancurkan)",
-                "Reduce (Mengurangi pemakaian material baru)",
-                "Recycle (Melebur jadi barang daur ulang)",
-                "Replace (Mengganti wadah dengan plastik)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Reuse (Menggunakan kembali tanpa dihancurkan).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_70",
-            "category": "Lingkungan & Kelestarian",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Membuang jutaan sampah botol plastik minuman sembarangan ke hamparan pesisir pantai lambat laun akan merusak kualitas air laut. Organisme hidup tingkat tinggi manakah yang akan menelan racun plastik ini tanpa sadar?",
-            "options": [
-                "Hewan laut seperti penyu, paus, dan burung camar",
-                "Spesies kuda nil raksasa sungai",
-                "Serangga air tawar pegunungan",
-                "Bakteri pengurai pasir pantai"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Hewan laut seperti penyu, paus, dan burung camar.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_71",
-            "category": "Energi Alternatif (Air & Angin)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Pembangkit Listrik Tenaga Air (PLTA) raksasa dibangun di daerah arus sungai yang deras. Perubahan energi pokok apakah yang dihasilkan oleh putaran turbin generator bendungan ini?",
-            "options": [
-                "Dari energi kinetik (gerak) aliran air diubah menjadi energi listrik bersih",
-                "Dari energi panas matahari diubah menjadi gelombang radio",
-                "Dari energi nuklir diubah menjadi uap es",
-                "Dari energi kimia batu bara diubah menjadi uap bensin"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Dari energi kinetik (gerak) aliran air diubah menjadi energi listrik bersih.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_72",
-            "category": "Energi Alternatif (Air & Angin)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Kincir angin bersayap modern (aerogenerator) banyak dipasang berjejer di dataran tinggi berhembus kuat. Apakah tujuan pemerintah menanam banyak turbin angin raksasa di sana?",
-            "options": [
-                "Membangkitkan daya setrum listrik yang ramah lingkungan tanpa asap batu bara",
-                "Menyedot polusi udara kota untuk dibuang ke lapisan atmosfer",
-                "Mendinginkan cuaca panas kota saat musim kemarau panjang tiba",
-                "Menggiling biji gandum mentah para petani menjadi tepung gandum"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Membangkitkan daya setrum listrik yang ramah lingkungan tanpa asap batu bara.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_73",
-            "category": "Energi Alternatif (Air & Angin)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Saat kita menyalakan kipas angin di kamar, listrik dari steker mengalir dan memutar baling-baling hingga kencang. Transformasi energi apakah yang terjadi di dalam motor dinamo kipas itu?",
-            "options": [
-                "Energi listrik diubah secara mekanik menjadi energi gerak (kinetik)",
-                "Energi pegas berubah menjadi energi magnet memancar",
-                "Energi gerak berubah wujud menjadi energi cahaya terang",
-                "Energi termal panas diubah mendadak menjadi hembusan salju"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Energi listrik diubah secara mekanik menjadi energi gerak (kinetik).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_74",
-            "category": "Energi Alternatif (Air & Angin)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Bendungan penahan laju sungai bisa menjatuhkan ratusan ton debit air murni dalam sedetik melalui pintu pembuangannya. Ke manakah aliran deras itu dihempaskan agar berguna?",
-            "options": [
-                "Ke arah turbin baling-baling raksasa yang berada di bawah tanah untuk diputar kencang",
-                "Ke area persawahan di atas bukit agar selalu terendam air subur",
-                "Ke dalam kuali panas untuk segera direbus menjadi uap awan hujan buatan",
-                "Ke sarang hewan buas di lembah agar pemukiman warga aman"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Ke arah turbin baling-baling raksasa yang berada di bawah tanah untuk diputar kencang.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_75",
-            "category": "Energi Alternatif (Air & Angin)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Matahari memancarkan panas yang sangat melimpah secara gratis setiap hari. Benda berbentuk papan datar apakah yang dirakit di atas atap rumah untuk menyerap energi ini menjadi listrik?",
-            "options": [
-                "Panel Surya (Solar Cell / Solar Panel)",
-                "Antena Parabola Radar",
-                "Kincir Turbin Sayap Tiga",
-                "Kaca Pembesar Optik"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Panel Surya (Solar Cell / Solar Panel).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_76",
-            "category": "Botani & Adaptasi Fisik (Iksc Sains)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Bagi makhluk manusia, reaksi otomatis tubuh berupa gerakan menggigil kencang saat berada di iklim beku bersalju adalah mekanisme pintar otak. Apakah fungsi sejati dari refleks menggigil ini bagi organ di tubuh?",
-            "options": [
-                "Memproduksi suhu hangat internal secara mandiri lewat kontraksi gesekan otot super cepat",
-                "Membuat hewan pemangsa lari ketakutan dengan gerakan tubuh",
-                "Menghentikan peredaran sel darah mendadak dari hidung",
-                "Membuang air lebih cepat dari kulit untuk menyeimbangkan berat"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Memproduksi suhu hangat internal secara mandiri lewat kontraksi gesekan otot super cepat.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_77",
-            "category": "Botani & Adaptasi Fisik (Iksc Sains)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sebuah tanaman pot mawar sangat membutuhkan komponen nutrisi tanah dan cahaya. Namun, tanaman mawar yang ditinggalkan dalam kekeringan total seminggu penuh tanpa ditengok akan berakhir dengan kondisi fisik seperti apa?",
-            "options": [
-                "Layu total, kehilangan seluruh hijau daunnya yang mengerut, dan rontok kering menuju mati",
-                "Mawar akan berakar kuat, tumbuh lebih subur menghasilkan oksigen lebat",
-                "Tanaman berduri itu mendadak mutasi membesar menelan cahaya mentari",
-                "Kelopak mahkotanya akan mekar lebih merah cemerlang tanpa kuncup hijau"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Layu total, kehilangan seluruh hijau daunnya yang mengerut, dan rontok kering menuju mati.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_78",
-            "category": "Botani & Adaptasi Fisik (Iksc Sains)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Hewan ternak herbivora berbadan besar seperti sapi dan domba memiliki anatomi lambung pencernaan yang sangat kompleks dengan empat bilik berbeda. Mengapa evolusi membentuk perut hewan ini serumit itu?",
-            "options": [
-                "Untuk mencerna dan menghancurkan serat selulosa rumput yang tebal dan keras",
-                "Untuk mencerna daging alot dari hewan sisa buruan serigala",
-                "Untuk menyimpan persediaan oksigen tambahan sebelum masuk lumpur",
-                "Untuk menampung literan susu yang siap diberikan pada petani"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Untuk mencerna dan menghancurkan serat selulosa rumput yang tebal dan keras.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_79",
-            "category": "Botani & Adaptasi Fisik (Iksc Sains)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Hewan mamalia amfibi memiliki paru-paru kecil dan sering merayap keluar dari rawa. Bagaimanakah cara istimewa yang mereka gunakan untuk menyerap ekstra oksigen saat sedang berada lama di dasar lumpur?",
-            "options": [
-                "Bernapas dengan menyerap molekul oksigen terlarut melalui pori-pori kulit basah mereka",
-                "Menghirup gelembung uap panas vulkanik yang bocor dari kawah darat",
-                "Memakan lumut hijau lebat yang tumbuh menutupi sekujur tubuh mereka",
-                "Memanfaatkan organ insang raksasa tersembunyi yang mekar setiap malam"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bernapas dengan menyerap molekul oksigen terlarut melalui pori-pori kulit basah mereka.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_80",
-            "category": "Botani & Adaptasi Fisik (Iksc Sains)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sistem perasa yang mengirimkan sinyal sedap ke otak berpusat di lidah kita. Jika kamu menjulurkan lidah ke kaca, kamu akan melihat bintil-bintil merah kecil pencicip rasa. Disebut apakah bintil-bintil saraf penting ini?",
-            "options": [
-                "Papila lidah pencicip rasa murni",
-                "Trakea saluran pernapasan halus",
-                "Kelenjar parotis penghasil air liur",
-                "Alveolus organ pertukaran kantung gas"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Papila lidah pencicip rasa murni.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_81",
-            "category": "Pengetahuan Analitik (Literasi Campuran Iksc)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di sebuah toko buku koperasi, satu buah pensil corak Australia dijual seharga Rp 4.000. Jika kamu membayar kepada kasir dengan menyodorkan pecahan kertas Rp 10.000 bergambar bung karno, berapakah uang kembalianmu seharusnya?",
-            "options": [
-                "Pecahan kembalian bersih sebesar Rp 6.000 perak",
-                "Pecahan kembalian bersih sebesar Rp 7.000 perak",
-                "Pecahan kembalian bersih sebesar Rp 5.000 perak",
-                "Pecahan kembalian bersih sebesar Rp 8.000 perak"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Pecahan kembalian bersih sebesar Rp 6.000 perak.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_82",
-            "category": "Pengetahuan Analitik (Literasi Campuran Iksc)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Perhatikan sistem pola angka dari jejak lompatan kanguru ini! Jika sebuah kanguru mungil terus melompat menapak di angka 6, lalu 14, kemudian mendarat di 22. Jika ritmenya konstan tidak berubah, batu mana yang akan terinjak berikutnya?",
-            "options": [
-                "Batu yang ditandai dengan ukiran nomor 30 di tanah",
-                "Batu yang ditandai dengan ukiran nomor 28 di tanah",
-                "Batu yang ditandai dengan ukiran nomor 32 di tanah",
-                "Batu yang ditandai dengan ukiran nomor 26 di tanah"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Batu yang ditandai dengan ukiran nomor 30 di tanah.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_83",
-            "category": "Pengetahuan Analitik (Literasi Campuran Iksc)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Jika saat lomba atletik sains, Fandi berlari dengan ritme tinggi hingga ia tepat menyalip pelari sekolah lain yang tadinya menduduki posisi ke-6 mutlak. Alhasil, berada di peringkat perlombaan ke berapakah si Fandi saat ini berlari?",
-            "options": [
-                "Ia berhak menempati dan menggeser di titik posisi ke-6 itu",
-                "Kini ia melaju mendahului jauh di posisi urutan ke-5",
-                "Kini ia malah merosot jatuh ke posisi urutan ke-7",
-                "Kini ia melesat tak terkejar di posisi urutan ke-4"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Ia berhak menempati dan menggeser di titik posisi ke-6 itu.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_84",
-            "category": "Pengetahuan Analitik (Literasi Campuran Iksc)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Selembar brosur kertas sains berbentuk bujur sangkar sempurna diletakkan di meja. Jika ibu guru memotong miring lurus 2 buah sudut siku kertas tersebut dan membuang potongannya, maka tersisa berapa sudut titik nyata dari kertas itu saat ini?",
-            "options": [
-                "Kertas tersebut sekarang akan memiliki total 6 titik sudut pinggiran",
-                "Kertas tersebut sekarang akan memiliki total 4 titik sudut pinggiran",
-                "Kertas tersebut sekarang akan memiliki total 8 titik sudut pinggiran",
-                "Kertas tersebut sekarang akan memiliki total 2 titik sudut pinggiran"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Kertas tersebut sekarang akan memiliki total 6 titik sudut pinggiran.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_85",
-            "category": "Pengetahuan Analitik (Literasi Campuran Iksc)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sebuah jam dinding bundar besar tertempel kuat, dengan jarum pendek diam tepat di angka 5 dan jarum panjang di atas mutlak angka 12. Berapakah besaran total derajat busur sudut presisi terkecil yang terbentuk oleh persilangan arah jarum tersebut?",
-            "options": [
-                "Sudut tumpul terbuka selebar 150 derajat murni",
-                "Sudut lancip melengkung sebesar 60 derajat murni",
-                "Sudut siku siku kaku bernilai 90 derajat pas",
-                "Sudut datar memanjang genap 180 derajat"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Sudut tumpul terbuka selebar 150 derajat murni.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_86",
-            "category": "Kosakata Lintas Sains Iksc (Filler 1)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Di buku teks bahasa Inggris, seekor tikus kecil pemakan keju berlari cepat dilambangkan dengan diksi tunggal 'mouse'. Jika ada wabah invasi ratusan tikus liar, bagaimana gramatika jamak yang baku merujuk pada koloni hama hewan ini?",
-            "options": [
-                "Kelompok tikus-tikus tersebut disebut dengan ejaan (Mice)",
-                "Kelompok tikus-tikus tersebut disebut dengan ejaan (Mouses)",
-                "Kelompok tikus-tikus tersebut disebut dengan ejaan (Mices)",
-                "Kelompok tikus-tikus tersebut disebut dengan ejaan (Micies)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Kelompok tikus-tikus tersebut disebut dengan ejaan (Mice).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_87",
-            "category": "Kosakata Lintas Sains Iksc (Filler 1)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Ketika cuaca gerimis di hutan liar, beberapa tanaman jamur putih kecil mendadak bermunculan mekar dari sela batang kayu membusuk. Secara ilmiah, kelompok kerajaan makhluk hidup apakah jamur itu tergolong?",
-            "options": [
-                "Fungi (mereka bukanlah tumbuhan yang punya klorofil untuk memasak makanan)",
-                "Plantae (tumbuhan berklorofil murni yang menyerap matahari)",
-                "Animalia (binatang bersel tunggal karnivora amfibi)",
-                "Monera (bakteri hijau lumut padat menular)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Fungi (mereka bukanlah tumbuhan yang punya klorofil untuk memasak makanan).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_88",
-            "category": "Kosakata Lintas Sains Iksc (Filler 1)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Pada proses kimia rumah tangga, ketika satu takaran sendok kristal garam laut kotor diaduk kasar di dalam gelas air hangat, garam tersebut perlahan-lahan sirna tanpa residu. Apa nama sebutan reaksi lenyapnya padatan pada cairan jernih itu?",
-            "options": [
-                "Zat terlarut tersebut sukses melebur atau melarut murni dalam pelarut zat cair",
-                "Garam tersebut menguap lenyap memuai ke udara panas kabin",
-                "Garam berubah beku membatu dalam cairan es oksigen molekuler",
-                "Air menghancurkan kristal itu merubahnya menjadi logam padat keras"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Zat terlarut tersebut sukses melebur atau melarut murni dalam pelarut zat cair.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_89",
-            "category": "Kosakata Lintas Sains Iksc (Filler 1)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Setiap satwa berevolusi sangat spesifik atas kemampuan organnya. Kucing raksasa karnivora seperti Harimau Siberia sanggup membunuh rusa besar dalam hitungan detik. Di bawah ini, kemampuan mutlak manakah yang tidak dikodratkan alam pada insting si raja rimba?",
-            "options": [
-                "Kemampuan duduk memegang kertas untuk fasih membaca bait kalimat dongeng manusia",
-                "Berenang melintasi muara sungai membelah arus demi berburu daging",
-                "Memanjat dahan rendah menggunakan kukunya yang sekuat pisau lipat",
-                "Berlari sangat pesat dari titik diam memburu satwa lalai savana"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Kemampuan duduk memegang kertas untuk fasih membaca bait kalimat dongeng manusia.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_90",
-            "category": "Kosakata Lintas Sains Iksc (Filler 1)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Apa alasan utama logis mengapa daun-daun lebar berwarna kuning kering dan jingga kemerahan selalu rontok berguguran mengotori trotoar setiap akhir tahun tiba menjelang hari raya di kawasan sub-tropis utara benua Amerika?",
-            "options": [
-                "Aksi defensif (pengguguran daun) untuk menyimpan energi dan air demi hadapi suhu es",
-                "Untuk mengganti bunganya dengan mahkota emas menyerap hujan meteorologi",
-                "Daun sengaja dijatuhkan guna menyuapi kelaparan koloni serangga predator darat",
-                "Proses fotosintesis terbalik memicu panas api yang membakar serat klorofil akar"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Aksi defensif (pengguguran daun) untuk menyimpan energi dan air demi hadapi suhu es.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_91",
-            "category": "Kosakata Lintas Sains Iksc (Filler 2)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Sebuah bayangan hitam memanjang gelap menyusuri tanah luas akibat blokade cahaya. Apabila sang Matahari sore menyengat berada pas di sebelah sisi barat, menunjuk ke arah mata angin manakah jatuhnya bayangan panjang tersebut?",
-            "options": [
-                "Mencetak siluet lurus memanjang menunjuk berlawanan ke timur",
-                "Bayangan condong sangat lurus maju ke kutub arah utara",
-                "Bayangan memendek tegak jatuh di pusat pijakan lantai dasar",
-                "Bayangan mundur jauh menyelinap ke selatan gurun pasir"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Mencetak siluet lurus memanjang menunjuk berlawanan ke timur.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_92",
-            "category": "Kosakata Lintas Sains Iksc (Filler 2)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Pada ilmu bedah struktur geometri dasar, wujud alat makan sehari-hari kaleng susu cair dan gelas silinder kaca bening memiliki karakteristik mutlak 3 dimensi, yang mana identik mewarisi sifat dari bangun ruangan apakah ia secara visual matematika?",
-            "options": [
-                "Bentuk tiga dimensi ruang tabung bertutup alas melingkar",
-                "Bangun kubus kotak presisi tinggi sejajar simetris",
-                "Prisma segitiga runcing menjulang limas tegap",
-                "Bola bundar pejal padat pepat elastis memantul"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bentuk tiga dimensi ruang tabung bertutup alas melingkar.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_93",
-            "category": "Kosakata Lintas Sains Iksc (Filler 2)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Seekor burung camar putih liar mengepakkan sayap melambung tanpa suara karena menunggangi kecepatan arus udara pesisir (angin). Secara keilmuan iklim, deskripsi apakah yang mendefinisikan terciptanya tenaga dorongan angin udara ini?",
-            "options": [
-                "Arus gerak molekul udara kasat mata yang tergeser mengalir sebab beda panas dingin suhu",
-                "Semburan karbon panas dari kepulan belerang gunung aktif dasar samudra raya",
-                "Kekuatan gaya sentrifugal bulan menyeret kutub es menekan oksigen beku",
-                "Sisa embusan napas pernapasan jutaan paus raksasa membela samudra atlantik"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Arus gerak molekul udara kasat mata yang tergeser mengalir sebab beda panas dingin suhu.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_94",
-            "category": "Kosakata Lintas Sains Iksc (Filler 2)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Lebah madu belang memiliki organ pendeteksi di kaki dan rambut perutnya yang lengket untuk mengambil debuk kuning bunga dan memindahkannya ke pohon tetangga jauh. Apa istilah resmi untuk kebaikan lebah pada perkembangbiakan tanaman dunia ini?",
-            "options": [
-                "Berperan sentral sebagai perantara proses penyerbukan atau Polinator kawin serbuk bunga",
-                "Bertugas mutlak sebagai pemangsa serangga racun ulat pemakan akar buah",
-                "Merupakan penyumbang pestisida anti racun biologi terhebat bumi kita",
-                "Penggali pupuk kompos ajaib tanah humusnya tanaman berbunga cerah"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Berperan sentral sebagai perantara proses penyerbukan atau Polinator kawin serbuk bunga.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_95",
-            "category": "Kosakata Lintas Sains Iksc (Filler 2)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Benda apakah yang sangat terang namun memancarkan ilusi pantulan ketika disandarkan dekat buku? Bila kita taruh selembar abjad huruf 'p' gempal dan memandang pantulannya di cermin panjang datar, karakter alfabet cetak apakah yang justru kita baca dari ilusi dalam kaca?",
-            "options": [
-                "Sosok alfabet pantul tersebut 100% simetris mirip abjad (q) latin kecil",
-                "Sebuah cetakan tebal persis seperti huruf abjad (b) latin membulat",
-                "Sebuah garis lurus mirip tiang membentuk alfabet (l) sempit rapi",
-                "Menjelma kurva belok patah seperti alfabet abjad kaku (m) pendek"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Sosok alfabet pantul tersebut 100% simetris mirip abjad (q) latin kecil.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_96",
-            "category": "Kosakata Lintas Sains Iksc (Filler 3)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Dalam bahasa serapan barat pergaulan sains, ketika seekor anak kucing yang lucu digambarkan mendengkur karena kehangatan alas karpet. Pada potongan kalimat 'The cute happy kitten purred softly on the rug', dari deret vokabuler, kata manakah yang berfungsi sebagai Adjective murni?",
-            "options": [
-                "Kata ('Happy' & 'Cute') yang bekerja menyifati rupa atau emosi makhluk hewan itu",
-                "Kata benda ('Kitten') figur satwa hidup tokoh peran utamanya memikat hati",
-                "Kata kerja bising ('Purred') representasi gerak aktif dengkur laring pita suaranya",
-                "Kata keterangan ('Softly') penjelas gaya tempo hening sunyi santai lambat"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Kata ('Happy' & 'Cute') yang bekerja menyifati rupa atau emosi makhluk hewan itu.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_97",
-            "category": "Kosakata Lintas Sains Iksc (Filler 3)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Alat potong manual yang memiliki fungsi penjepit silang untuk membelah kertas kerajinan tangan disebut gunting dalam bahasa nusantara. Bagaimana pola ejaan huruf alfabet yang paling valid menurut kamus resmi tata bahasa Inggris Internasionalnya?",
-            "options": [
-                "Merangkai susunan vokal tulisan baku menjadi (S-C-I-S-S-O-R-S)",
-                "Tersusun dari ejaan ringkas ganda berbunyi (S-C-I-S-O-R-S)",
-                "Kombinasi acak tertulis salah huruf tengah tebal (S-I-S-S-C-O-R-S)",
-                "Dieja padat menyambung tanpa aturan awalan (S-C-I-S-A-R-S)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Merangkai susunan vokal tulisan baku menjadi (S-C-I-S-S-O-R-S).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_98",
-            "category": "Kosakata Lintas Sains Iksc (Filler 3)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Pada malam bertabur konstelasi langit musim gugur, ada satu tata rasi yang sangat legendaris di ufuk utara. Berdasarkan catatan manuskrip astronom angkatan laut klasik, siapakah identitas bintang malam yang menduduki predikat pancaran cahaya alam semesta paling terang jika dilihat dari lautan kita?",
-            "options": [
-                "Bintang Sirius terang megah dari kluster Alpha Canis Majoris di sabuk anjing pelacak",
-                "Rasi Bintang Orion sang pemburu tangguh bertombak busur panah api perak",
-                "Gugusan komet Halley raksasa biru pekat berekor panjang lintas galaksi bima",
-                "Planet Venus terik benderang si Bintang Kejora palsu pelita para pengembara"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Bintang Sirius terang megah dari kluster Alpha Canis Majoris di sabuk anjing pelacak.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_99",
-            "category": "Kosakata Lintas Sains Iksc (Filler 3)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Peti alat sekolah Tini memiliki 4 kemeja warna terang dan 4 celana panjang jins modis bersih. Melalui pengoperasian cabang matematika dasar peluang (kombinasi), ada berapa setelan total variasi baju dan celana itu bisa dipadu-padankan dalam acara pertunjukan bakat siang hari nanti?",
-            "options": [
-                "Mencapai batas perpaduan murni total sebanyak 16 set pasangan modis berbeda",
-                "Sanggup menyentuh batas murni kemungkinan total 8 kombinasi gaya keren berbeda",
-                "Angka pencapaian bervariasi ganda menyentuh 32 kombinasi wujud busana",
-                "Batas matematis mentok terhenti di angka 12 campuran kombinasi selang seling"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Mencapai batas perpaduan murni total sebanyak 16 set pasangan modis berbeda.",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        },
-        {
-            "id": "si_iksc_100_v3_100",
-            "category": "Kosakata Lintas Sains Iksc (Filler 3)",
-            "difficulty": "STANDARD",
-            "reasoning": "R3",
-            "question": "Mesin ini menyatu dicolok langsung bersama unit menara komputer dan berbunyi bising ketika menelan selembar kertas putih bersih dan mengeluarkannya berisi tulisan grafik tebal bertinta dari berkas data ketikan dokumen sekolah. Mesin perakitan mekanis perangkat eksternal tersebut resmi dinamakan sebagai apa?",
-            "options": [
-                "Hardware penduplikat cetak mekanik yang resmi diakui sebagai unit (Printer Dokumentasi)",
-                "Panel ketik empuk pemencet huruf abjad digital penghasil data ketik murni (Keyboard)",
-                "Pemindai cahaya inframerah pelacak tulisan kertas fisik mentah menembus (Scanner)",
-                "Layar kaca proyektor pancaran warna beresolusi definisi super tajam menawan (Monitor)"
-            ],
-            "correct": 0,
-            "explanation": "Jawaban yang tepat untuk hal ini adalah: Hardware penduplikat cetak mekanik yang resmi diakui sebagai unit (Printer Dokumentasi).",
-            "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."
-        }
-    ],
-    "english_iklc": [],
-    "english_osi": [],
-    "english_ef": []
-};
-        // ==
+        // DATABASE SOAL MURNI
+        const dbQuestions = {"math_kmnr": [], "math_numerik": [], "math_spasial": [], "science_ksnr": [], "science_iksc": [{"id": "si_iksc_100_v3_1", "category": "Legenda Sun & Moon (Korea)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di manakah letak rumah ibu dan kedua anaknya dalam legenda Sun and Moon dari Korea?", "options": ["Di dekat tepi hutan", "Di atas puncak gunung", "Di pinggir danau", "Di padang pasir"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Di dekat tepi hutan.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_2", "category": "Legenda Sun & Moon (Korea)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Benda apakah yang tanpa sengaja terjatuh dan hilang saat sang ibu lari ketakutan dari kejaran harimau?", "options": ["Sebuah selendang (scarf)", "Keranjang buah", "Sepatu", "Topi"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Sebuah selendang (scarf).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_3", "category": "Legenda Sun & Moon (Korea)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Bagaimanakah taktik licik sang harimau untuk menipu anak-anak agar mau membukakan pintu rumah?", "options": ["Ia memakai selendang ibu mereka", "Ia berpura-pura menjadi tukang pos", "Ia menawarkan permen", "Ia membawa keranjang blackberry"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Ia memakai selendang ibu mereka.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_4", "category": "Legenda Sun & Moon (Korea)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Bagaimana cara ajaib anak-anak tersebut bisa naik dari atas pohon menuju ke langit?", "options": ["Mereka memanjat sebuah tangga rahasia", "Mereka diterbangkan oleh angin topan", "Mereka menunggangi burung elang", "Mereka melompat dari dahan tertinggi"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Mereka memanjat sebuah tangga rahasia.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_5", "category": "Legenda Sun & Moon (Korea)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Setelah sampai di atas langit, menjelma menjadi benda angkasa apakah kedua anak tersebut?", "options": ["Matahari dan Bulan", "Bintang dan Komet", "Awan dan Hujan", "Pelangi dan Petir"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Matahari dan Bulan.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_6", "category": "Kehidupan Purba Sebelum Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Pada zaman dahulu sebelum mengenal peradaban modern, di manakah manusia purba biasanya berlindung dari cuaca dingin?", "options": ["Di dalam gua-gua alam", "Di rumah pohon yang tinggi", "Di dalam tenda daun", "Di kastil batu pasir"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Di dalam gua-gua alam.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_7", "category": "Kehidupan Purba Sebelum Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sebelum mereka belajar cara menyalakan api, bagaimana cara manusia purba mengolah daging hasil buruan agar lebih awet?", "options": ["Menjemurnya di bawah matahari hingga kering", "Merebusnya dengan air sungai", "Memendamnya di dalam lumpur panas", "Membakarnya menggunakan sinar matahari"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Menjemurnya di bawah matahari hingga kering.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_8", "category": "Kehidupan Purba Sebelum Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Berapa lamakah waktu yang dibutuhkan manusia purba untuk menjemur daging rusa hingga benar-benar kering dan awet?", "options": ["Empat minggu", "Satu hari penuh", "Enam bulan", "Dua jam"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Empat minggu.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_9", "category": "Kehidupan Purba Sebelum Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sebelum bisa melelehkan besi, bahan alam apakah yang digunakan manusia purba untuk membuat alat memancing dan berburu?", "options": ["Batu, kayu, dan tulang", "Besi, baja, dan emas", "Plastik, kaca, dan perunggu", "Tanah liat, perak, dan kain"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Batu, kayu, dan tulang.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_10", "category": "Kehidupan Purba Sebelum Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Dalam gambar kehidupan purba, hewan liar apakah yang paling membahayakan nyawa manusia saat berkeliaran di luar gua bersalju?", "options": ["Serigala (Wolf)", "Singa laut", "Kucing rumah", "Burung camar"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Serigala (Wolf).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_11", "category": "Penemuan & Pemanfaatan Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Menurut para ilmuwan, fenomena alam ekstrem apakah yang menjadi sumber pertama manusia purba mengenal api liar?", "options": ["Sambaran petir dan letusan gunung berapi", "Gesekan antara awan mendung dan air", "Angin kencang yang bergesekan dengan batu", "Cahaya matahari yang terlalu terik di batu"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Sambaran petir dan letusan gunung berapi.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_12", "category": "Penemuan & Pemanfaatan Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Setelah bertahun-tahun mencari tahu, bagaimana cara manusia purba pada akhirnya berhasil menyalakan api buatan sendiri?", "options": ["Dengan menggesekkan dua batu atau tongkat kayu kering", "Dengan menggunakan kaca pembesar pada siang hari", "Dengan membenturkan tulang hewan ke tanah liat", "Dengan mencelupkan kayu ke dalam air panas"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Dengan menggesekkan dua batu atau tongkat kayu kering.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_13", "category": "Penemuan & Pemanfaatan Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di masa industri awal, seorang pandai besi (ironsmith) sangat bergantung pada suhu api yang tinggi. Apakah tujuan utamanya memanaskan logam?", "options": ["Untuk melunakkan logam agar mudah ditempa menjadi alat", "Untuk membakar kotoran yang menempel pada logam tua", "Untuk mengubah logam biasa menjadi logam emas berkilau", "Untuk menghancurkan pedang musuh menjadi debu"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Untuk melunakkan logam agar mudah ditempa menjadi alat.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_14", "category": "Penemuan & Pemanfaatan Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Setelah pot tanah liat selesai dibentuk, mengapa pengrajin tembikar wajib memasukkan pot tersebut ke dalam oven pembakaran?", "options": ["Agar tanah liat mengeras secara permanen dan kedap air", "Agar tanah liat tersebut menjadi elastis seperti karet", "Agar warna tanah liat memudar menjadi putih", "Agar tanah liat berbau harum sebelum dicat"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Agar tanah liat mengeras secara permanen dan kedap air.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_15", "category": "Penemuan & Pemanfaatan Api", "difficulty": "STANDARD", "reasoning": "R3", "question": "Untuk mencairkan bongkahan pasir silika (kuarsa) menjadi bahan dasar botol bening, seorang pengrajin kaca mutlak memerlukan apa?", "options": ["Api perapian dengan suhu yang sangat ekstrem", "Air es yang disiramkan secara perlahan", "Sinar matahari yang dikumpulkan cermin", "Pukulan palu besi yang terus menerus"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Api perapian dengan suhu yang sangat ekstrem.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_16", "category": "Tata Surya (Planet Raksasa & Terluar)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Planet ini mendapat julukan sebagai planet raksasa gas terbesar di Tata Surya kita. Planet apakah itu?", "options": ["Jupiter", "Saturnus", "Uranus", "Neptunus"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Jupiter.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_17", "category": "Tata Surya (Planet Raksasa & Terluar)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sangat jauh dan dingin, planet berwarna biru gelap ini menempati urutan orbit paling luar dari Matahari. Apakah nama planet tersebut?", "options": ["Neptunus", "Uranus", "Saturnus", "Jupiter"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Neptunus.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_18", "category": "Tata Surya (Planet Raksasa & Terluar)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Selain ukurannya yang raksasa, planet ini sangat mudah dikenali karena memiliki badai pusaran bintik merah abadi. Planet apakah yang dimaksud?", "options": ["Jupiter", "Mars", "Venus", "Saturnus"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Jupiter.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_19", "category": "Tata Surya (Planet Raksasa & Terluar)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Planet apakah yang posisinya berada tepat di urutan kelima dari Matahari dan memisahkan kelompok planet berbatu dengan planet es?", "options": ["Jupiter", "Mars", "Saturnus", "Uranus"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Jupiter.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_20", "category": "Tata Surya (Planet Raksasa & Terluar)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Planet apakah yang memiliki cincin paling megah dan sangat luas jika diamati menggunakan teleskop luar angkasa?", "options": ["Saturnus", "Uranus", "Neptunus", "Jupiter"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Saturnus.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_21", "category": "Tata Surya (Planet Dalam & Benda Langit)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di antara semua anggota Tata Surya, planet manakah yang memiliki ukuran paling mungil dan berjarak terdekat dari Matahari?", "options": ["Merkurius", "Venus", "Pluto", "Mars"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Merkurius.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_22", "category": "Tata Surya (Planet Dalam & Benda Langit)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Benda angkasa apakah yang gravitasinya sangat besar sehingga posisinya selalu menjadi pusat putaran bagi seluruh planet?", "options": ["Matahari", "Bulan", "Komet", "Bintang Sirius"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Matahari.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_23", "category": "Tata Surya (Planet Dalam & Benda Langit)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Benda langit apakah yang secara terus menerus bergerak memutari (menjadi satelit alami) planet Bumi kita?", "options": ["Bulan", "Matahari", "Bintang", "Asteroid"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bulan.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_24", "category": "Tata Surya (Planet Dalam & Benda Langit)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Bulan terlihat bersinar sangat terang di malam hari, padahal ia bukan bintang. Dari manakah sumber cahaya Bulan tersebut?", "options": ["Memantulkan pancaran sinar dari Matahari", "Menghasilkan api vulkanik di permukaannya", "Memantulkan cahaya terang dari lampu di Bumi", "Menyerap panas dari bintang-bintang sekitarnya"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Memantulkan pancaran sinar dari Matahari.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_25", "category": "Tata Surya (Planet Dalam & Benda Langit)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Planet manakah yang menempati posisi urutan ketiga dari Matahari, tempat di mana terdapat kelimpahan air, oksigen, dan makhluk hidup?", "options": ["Bumi", "Venus", "Mars", "Merkurius"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bumi.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_26", "category": "Waktu & Perputaran Bumi", "difficulty": "STANDARD", "reasoning": "R3", "question": "Fenomena alam apakah yang pertama kali digunakan oleh manusia zaman dulu sebagai tanda untuk mulai mengukur dan membagi waktu?", "options": ["Pergantian datangnya siang dan malam", "Perubahan bentuk awan", "Terjadinya gerhana bulan", "Datangnya musim salju"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Pergantian datangnya siang dan malam.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_27", "category": "Waktu & Perputaran Bumi", "difficulty": "STANDARD", "reasoning": "R3", "question": "Siklus siang dan malam hari terjadi secara alami terus menerus. Pergerakan bumi apakah yang menyebabkan peristiwa ini?", "options": ["Rotasi (Bumi berputar pada porosnya sendiri)", "Revolusi", "Orbit", "Gravitasi"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Rotasi (Bumi berputar pada porosnya sendiri).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_28", "category": "Waktu & Perputaran Bumi", "difficulty": "STANDARD", "reasoning": "R3", "question": "Kehidupan manusia dipengaruhi oleh waktu tidur di malam hari dan bekerja di siang hari. Berapa jamkah waktu yang dihabiskan untuk 1 rotasi bumi?", "options": ["24 jam", "12 jam", "60 menit", "30 jam"], "correct": 0, "explanation": "Jawaban yang tepat adalah: 24 jam.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_29", "category": "Waktu & Perputaran Bumi", "difficulty": "STANDARD", "reasoning": "R3", "question": "Anna berangkat sekolah dan sarapan pada pukul 7 pagi. Jika ia pulang sekolah tepat pukul 12 siang, berapa lamakah Anna menghabiskan waktu di sekolah?", "options": ["5 jam", "6 jam", "4 jam", "7 jam"], "correct": 0, "explanation": "Jawaban yang tepat adalah: 5 jam.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_30", "category": "Waktu & Perputaran Bumi", "difficulty": "STANDARD", "reasoning": "R3", "question": "Apakah nama profesi bagi seorang ilmuwan yang secara khusus mendedikasikan ilmunya untuk mempelajari planet, bintang, dan pergerakan benda langit?", "options": ["Astronom (Astronomer)", "Astronot", "Ahli Fisika", "Pilot"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Astronom (Astronomer).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_31", "category": "Musim & Kalender", "difficulty": "STANDARD", "reasoning": "R3", "question": "Bumi tidak hanya berputar pada porosnya, tetapi juga mengelilingi Matahari secara perlahan. Dampak alamiah apa yang ditimbulkan dari pergerakan ini dalam setahun?", "options": ["Terjadinya pergantian empat musim (semi, panas, gugur, dingin)", "Terjadinya perubahan wujud air laut menjadi gas uap", "Terjadinya bencana badai salju di seluruh permukaan bumi", "Terjadinya fenomena air pasang dan surut di lautan"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Terjadinya pergantian empat musim (semi, panas, gugur, dingin).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_32", "category": "Musim & Kalender", "difficulty": "STANDARD", "reasoning": "R3", "question": "Dalam catatan astronomi dan penanggalan, berapakah jumlah hari yang tepat untuk bumi mengelilingi matahari dalam satu tahun kabisat khusus?", "options": ["366 hari", "365 hari", "364 hari", "360 hari"], "correct": 0, "explanation": "Jawaban yang tepat adalah: 366 hari.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_33", "category": "Musim & Kalender", "difficulty": "STANDARD", "reasoning": "R3", "question": "Liburan musim panas sangat ditunggu-tunggu oleh anak-anak di belahan bumi utara. Pada rentang bulan apakah puncak musim panas ini biasanya terjadi?", "options": ["Juni, Juli, dan Agustus", "Maret, April, dan Mei", "September, Oktober, dan November", "Desember, Januari, dan Februari"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Juni, Juli, dan Agustus.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_34", "category": "Musim & Kalender", "difficulty": "STANDARD", "reasoning": "R3", "question": "Musim gugur (autumn) terjadi ketika dedaunan berubah warna menjadi jingga kemerahan. Bulan apa sajakah yang umumnya masuk dalam musim gugur di belahan utara?", "options": ["September, Oktober, November", "Maret, April, Mei", "Juni, Juli, Agustus", "Desember, Januari, Februari"], "correct": 0, "explanation": "Jawaban yang tepat adalah: September, Oktober, November.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_35", "category": "Musim & Kalender", "difficulty": "STANDARD", "reasoning": "R3", "question": "Berdasarkan sistem kalender masehi yang kita gunakan sehari-hari secara global, ada berapakah jumlah total bulan dalam satu tahun penuh?", "options": ["12 bulan", "10 bulan", "6 bulan", "24 bulan"], "correct": 0, "explanation": "Jawaban yang tepat adalah: 12 bulan.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_36", "category": "Kanguru (Karakteristik Umum)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Kanguru adalah mamalia unik dari benua Australia. Apakah fungsi krusial dari keberadaan kantung (marsupial) di bagian perut kanguru betina?", "options": ["Sebagai tempat aman untuk merawat dan membesarkan bayinya (joey)", "Sebagai tempat menyimpan cadangan makanan rumput kering", "Sebagai tempat untuk menyimpan cadangan air hujan", "Sebagai kantung bantalan pelindung saat melompat"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Sebagai tempat aman untuk merawat dan membesarkan bayinya (joey).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_37", "category": "Kanguru (Karakteristik Umum)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Berdasarkan pengamatan pada bentuk rahang dan gigi serta makanannya di padang rumput liar, kanguru tergolong ke dalam kelompok hewan apa?", "options": ["Herbivora (Pemakan tumbuhan)", "Karnivora (Pemakan daging mamalia)", "Insektivora (Pemakan khusus serangga)", "Omnivora (Pemakan segalanya bebas)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Herbivora (Pemakan tumbuhan).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_38", "category": "Kanguru (Karakteristik Umum)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Untuk menghindari dan melarikan diri dari kejaran predator, kanguru mengandalkan organ fisik yang mana untuk melompat sangat tinggi dan cepat?", "options": ["Dua kaki belakangnya yang sangat besar dan berotot kuat", "Ekornya yang digunakan seperti baling-baling helikopter", "Dua kaki depannya yang dilatih untuk memukul", "Kantung marsupialnya yang memantul di tanah"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Dua kaki belakangnya yang sangat besar dan berotot kuat.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_39", "category": "Kanguru (Karakteristik Umum)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Bayi kanguru lahir dalam keadaan belum sempurna, buta, dan tidak berbulu. Apakah sebutan/nama khusus untuk bayi kanguru ini dalam bahasa Inggris?", "options": ["Joey", "Pup", "Cub", "Calf"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Joey.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_40", "category": "Kanguru (Karakteristik Umum)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Jika kita mencari habitat asli populasi hewan berkantung pelompat ini di peta dunia, ke negara manakah kita harus pergi?", "options": ["Australia", "Afrika", "Amerika Selatan", "Eropa"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Australia.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_41", "category": "Biologi Laut (Lumba-Lumba & Akuarium)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Aquarium besar (oceanarium) di kota biasanya memamerkan berbagai ikan eksotis laut. Secara bahasa, benda apakah sebenarnya akuarium itu?", "options": ["Wadah atau tangki kaca berisi air untuk memelihara hewan dan tumbuhan air", "Danau buatan besar di tengah kota", "Museum yang memamerkan kerangka fosil laut", "Kolam renang air panas untuk pertunjukan"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Wadah atau tangki kaca berisi air untuk memelihara hewan dan tumbuhan air.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_42", "category": "Biologi Laut (Lumba-Lumba & Akuarium)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Setiap jenis ikan memerlukan alat pernapasan khusus untuk menyerap oksigen yang terlarut di dalam air. Organ apakah yang digunakan ikan untuk bernapas?", "options": ["Insang (Gills)", "Paru-paru", "Jantung", "Hati"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Insang (Gills).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_43", "category": "Biologi Laut (Lumba-Lumba & Akuarium)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Meskipun memiliki sirip dan menghabiskan seluruh umurnya berenang di lautan, paus dan lumba-lumba tidak digolongkan sebagai ikan. Mengapa demikian?", "options": ["Karena mereka melahirkan anak dan menyusuinya (mamalia)", "Karena mereka dapat berjalan di pasir pantai", "Karena mereka memangsa hiu di perairan dalam", "Karena mereka bernapas melalui kulit"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Karena mereka melahirkan anak dan menyusuinya (mamalia).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_44", "category": "Biologi Laut (Lumba-Lumba & Akuarium)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Lumba-lumba adalah hewan laut cerdas yang suka melompat. Walau hidup di air laut dalam, menggunakan organ apakah mamalia ini bernapas?", "options": ["Paru-paru", "Insang luar", "Pori-pori kulit", "Gelembung udara"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Paru-paru.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_45", "category": "Biologi Laut (Lumba-Lumba & Akuarium)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sebuah mesin kecil harus selalu dihidupkan untuk menjaga ikan hias agar tidak mati di dalam akuarium kaca yang tertutup. Mesin mekanik apakah itu?", "options": ["Pompa udara atau aerator untuk menyuplai oksigen", "Termometer pengukur suhu panas air", "Pemanas pencair es", "Kipas angin kecil pendingin ruangan kaca"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Pompa udara atau aerator untuk menyuplai oksigen.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_46", "category": "Biologi Laut (Ubur-Ubur & Avertebrata)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di akuarium, pengunjung takjub melihat hewan transparan yang tidak memiliki otak, mata, maupun jantung. Hewan melayang apakah ini?", "options": ["Ubur-ubur (Jellyfish)", "Bulu babi berduri (Sea Urchin)", "Bintang laut (Starfish)", "Ikan badut (Clownfish)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Ubur-ubur (Jellyfish).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_47", "category": "Biologi Laut (Ubur-Ubur & Avertebrata)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Ubur-ubur merupakan avertebrata yang hanya mengandalkan jaring saraf sederhana. Karena tidak memiliki insang, dari manakah ia menyerap oksigen di dalam laut?", "options": ["Melalui seluruh permukaan kulit tubuhnya", "Menelan gelembung udara ke kepalanya", "Memakan rumput laut beroksigen", "Berenang ke permukaan menarik napas"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Melalui seluruh permukaan kulit tubuhnya.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_48", "category": "Biologi Laut (Ubur-Ubur & Avertebrata)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di antara avertebrata laut yang merayap lambat di dasar pasir, terdapat makhluk yang tubuhnya dipenuhi duri-duri hitam tajam sebagai perisai. Siapakah dia?", "options": ["Bulu babi laut (Sea urchin)", "Bintang laut (Starfish)", "Kuda laut (Seahorse)", "Teripang (Sea cucumber)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bulu babi laut (Sea urchin).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_49", "category": "Biologi Laut (Ubur-Ubur & Avertebrata)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sering terlihat merayap atau menempel pada dinding kaca akuarium, hewan lambat ini memiliki bentuk lima sisi yang identik seperti ornamen luar angkasa. Siapakah ia?", "options": ["Bintang laut (Starfish)", "Gurita", "Kuda laut", "Bulu babi"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bintang laut (Starfish).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_50", "category": "Biologi Laut (Ubur-Ubur & Avertebrata)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Saat berkunjung, anak-anak melihat ikan kecil berenang bergerombol. Ikan ini diberi nama ikan zebra (zebrafish) karena memiliki ciri fisik apa?", "options": ["Garis-garis horizontal beruntun (stripes) di sepanjang tubuhnya", "Warna hitam putih menyala di malam hari", "Memiliki empat kaki kecil", "Memakan rumput laut mirip zebra"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Garis-garis horizontal beruntun (stripes) di sepanjang tubuhnya.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_51", "category": "Biologi Laut (Ikan Buntal Beracun)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Ikan buntal (balloonfish) memiliki mekanisme pertahanan diri yang sangat unik saat bertemu predator. Apakah yang ia lakukan?", "options": ["Menelan air sangat banyak untuk menggembungkan badannya seperti bola", "Mengeluarkan tinta hitam pekat", "Berubah warna menyatu dengan pasir karang", "Menyengat dengan aliran listrik"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Menelan air sangat banyak untuk menggembungkan badannya seperti bola.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_52", "category": "Biologi Laut (Ikan Buntal Beracun)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Selain menggembungkan badannya agar tampak menakutkan, mengapa ikan buntal sangat ditakuti pemangsanya dan dilarang dimakan sembarangan?", "options": ["Karena organ tubuh dalamnya mengandung racun yang sangat mematikan", "Karena memiliki sisik keras seperti batu karang", "Karena durinya memancarkan listrik tinggi", "Karena ukuran tubuhnya terlalu besar"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Karena organ tubuh dalamnya mengandung racun yang sangat mematikan.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_53", "category": "Biologi Laut (Ikan Buntal Beracun)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di perairan Jepang, ikan buntal atau Fugu dihidangkan sebagai makanan mahal. Mengapa koki yang memotong ikan ini wajib memiliki lisensi dan keahlian tingkat tinggi?", "options": ["Untuk memisahkan kantung racunnya agar daging ikan aman dikonsumsi", "Untuk memotong tulang rawan raksasanya", "Untuk membuang sisiknya yang setajam pisau", "Agar ikan tidak meledak saat dimasak"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Untuk memisahkan kantung racunnya agar daging ikan aman dikonsumsi.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_54", "category": "Biologi Laut (Ikan Buntal Beracun)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Ketika ikan buntal sedang tidak dalam kondisi ketakutan atau merasa terancam bahaya, bagaimanakah ukuran dan wujud aslinya berenang?", "options": ["Ukurannya tergolong kecil dan kempes dengan sirip pendek", "Tetap menggembung menakutkan sepanjang waktu", "Berbentuk panjang mirip belut listrik", "Sangat pipih melekat di dasar pasir"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Ukurannya tergolong kecil dan kempes dengan sirip pendek.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_55", "category": "Biologi Laut (Ikan Buntal Beracun)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Meskipun ukurannya bisa menjadi besar bulat dan dipenuhi duri tajam saat terancam, apa makanan alami ikan buntal karnivora ini di lautan lepas?", "options": ["Keong, kerang keras, udang kecil, dan kepiting", "Hanya memakan rumput laut ganggang", "Paus kecil dan anjing laut", "Ubur-ubur raksasa beracun"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Keong, kerang keras, udang kecil, dan kepiting.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_56", "category": "Angin & Bencana", "difficulty": "STANDARD", "reasoning": "R3", "question": "Secara sederhana dalam ilmu sains cuaca dan iklim dunia, apakah yang sebenarnya dimaksud dengan fenomena angin (wind)?", "options": ["Pergerakan udara akibat adanya perbedaan suhu dan tekanan atmosfir", "Pergerakan awan tebal dari darat ke laut", "Uap air padat yang berputar di atmosfer", "Udara hampa yang terjebak di pegunungan"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Pergerakan udara akibat adanya perbedaan suhu dan tekanan atmosfir.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_57", "category": "Angin & Bencana", "difficulty": "STANDARD", "reasoning": "R3", "question": "Angin puting beliung berputar yang berbentuk corong panjang dan mampu menghancurkan rumah-rumah penduduk hingga rata dengan tanah dikenal dengan sebutan apa?", "options": ["Tornado", "Tsunami", "Banjir bandang", "Gempa vulkanik"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Tornado.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_58", "category": "Angin & Bencana", "difficulty": "STANDARD", "reasoning": "R3", "question": "Jika terjadi kebakaran alami akibat petir di hutan kering sabana, mengapa datangnya badai angin kencang justru sangat ditakuti oleh pasukan pemadam kebakaran?", "options": ["Karena angin memasok lebih banyak oksigen dan mendorong api menjalar cepat", "Karena angin membawa hujan badai yang merusak peralatannya", "Karena angin akan meniup api hingga padam seketika dan asapnya menebal", "Karena angin kencang langsung mendinginkan udara menjadi es"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Karena angin memasok lebih banyak oksigen dan mendorong api menjalar cepat.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_59", "category": "Angin & Bencana", "difficulty": "STANDARD", "reasoning": "R3", "question": "Selain merobohkan bangunan kayu, bahaya besar apakah yang sering kali ditimbulkan oleh amukan angin badai (hurricane) terhadap pepohonan tua dan rapuh di pinggir jalan?", "options": ["Tumbang merobohkan akar dan menimpa objek-objek di bawahnya", "Mencabut buah-buahannya sehingga masyarakat kelaparan", "Membuat pohon cepat kering lalu terbakar menjadi debu", "Menumbuhkan benih pohon liar lebih ganas dalam semalam"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Tumbang merobohkan akar dan menimpa objek-objek di bawahnya.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_60", "category": "Angin & Bencana", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di laut lepas, para pelaut zaman kuno sangat bergantung dan bersyukur ketika ada angin laut yang berhembus konstan. Apakah fungsi utama angin tersebut bagi pelaut kuno?", "options": ["Untuk meniup layar kapal mereka agar bergerak maju mengarungi perairan", "Untuk mengusir burung camar yang bertengger di kapal", "Untuk mendinginkan suhu geladak kayu kapal yang panas", "Untuk menciptakan ombak besar agar ikan naik ke permukaan"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Untuk meniup layar kapal mereka agar bergerak maju mengarungi perairan.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_61", "category": "Sifat Zat & Perubahan Wujud", "difficulty": "STANDARD", "reasoning": "R3", "question": "Air sangat penting bagi kelangsungan hidup ekosistem. Secara teori wujud materi sains, air keran yang kita minum sehari-hari berada dalam wujud apa?", "options": ["Zat cair (Liquid)", "Zat padat (Solid)", "Gas (Vapor)", "Plasma"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Zat cair (Liquid).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_62", "category": "Sifat Zat & Perubahan Wujud", "difficulty": "STANDARD", "reasoning": "R3", "question": "Ketika musim dingin mencapai suhu ekstrem minus nol derajat celcius, air hujan akan membeku dan jatuh ke tanah sebagai salju. Salju adalah air dalam wujud apa?", "options": ["Zat padat (Solid)", "Zat cair (Liquid)", "Gas (Vapor)", "Kristal cair"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Zat padat (Solid).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_63", "category": "Sifat Zat & Perubahan Wujud", "difficulty": "STANDARD", "reasoning": "R3", "question": "Ketika ibu merebus kuah sayur di panci tanpa penutup terlalu lama, airnya perlahan-lahan menyusut habis. Air mendidih tersebut sesungguhnya lenyap berubah menjadi wujud apa?", "options": ["Gas (Uap air / Vapor)", "Benda padat beku", "Cairan kental", "Kristal es keras"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Gas (Uap air / Vapor).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_64", "category": "Sifat Zat & Perubahan Wujud", "difficulty": "STANDARD", "reasoning": "R3", "question": "Air sirup yang dituangkan dari dalam botol panjang ke dalam gelas bulat seketika berubah penampilannya. Hal ini membuktikan bahwa zat cair memiliki sifat fisik utama apa?", "options": ["Bentuknya tidak tetap dan selalu berubah menyesuaikan dengan wadah tempatnya", "Ukurannya akan cepat menyusut jika dipindah", "Bisa ditarik panjang seperti benang lentur", "Volume zat cair otomatis bertambah ganda"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bentuknya tidak tetap dan selalu berubah menyesuaikan dengan wadah tempatnya.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_65", "category": "Sifat Zat & Perubahan Wujud", "difficulty": "STANDARD", "reasoning": "R3", "question": "Ibu memanaskan panci tebal berisi sekeping mentega beku. Tak lama mentega tersebut meleleh licin keemasan. Peristiwa transisi mencair ini disebabkan oleh paparan energi apa?", "options": ["Energi Panas (Kalor)", "Energi Angin", "Energi Cahaya Bulan", "Energi Magnet Bumi"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Energi Panas (Kalor).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_66", "category": "Lingkungan & Kelestarian", "difficulty": "STANDARD", "reasoning": "R3", "question": "Tindakan mendaur ulang (recycle) kardus bekas pengiriman menjadi bubur kertas kardus baru sangat penting bagi kelestarian alam. Hal ini dilakukan manusia untuk menekan tingginya angka apa?", "options": ["Limbah polusi sampah dan penebangan pohon", "Penggunaan air tanah perumahan", "Pengurangan jumlah kendaraan bermotor", "Polusi suara di perkotaan padat"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Limbah polusi sampah dan penebangan pohon.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_67", "category": "Lingkungan & Kelestarian", "difficulty": "STANDARD", "reasoning": "R3", "question": "Untuk menjaga kelestarian ekosistem sungai dan selokan kota, bahan limbah sisa dapur manakah yang sangat dilarang untuk dibuang sembarangan ke dalam pipa wastafel cucian piring?", "options": ["Sisa minyak goreng bekas atau jelantah panas", "Air sabun cuci tangan yang sudah diencerkan", "Sisa perasan air jeruk nipis", "Garam dapur kotor yang sudah mencair"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Sisa minyak goreng bekas atau jelantah panas.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_68", "category": "Lingkungan & Kelestarian", "difficulty": "STANDARD", "reasoning": "R3", "question": "Air tanah di bumi jumlahnya terbatas. Tindakan pencegahan cerdas apa yang paling sederhana dan bisa kita lakukan setiap pagi di wastafel kamar mandi untuk menghemat cadangan air bumi?", "options": ["Menutup keran air rapat-rapat saat kita sedang asyik menggosok gigi", "Mandi menggunakan air hangat terus menerus", "Menyiram dinding kamar mandi setiap hari", "Membiarkan bak mandi meluber hingga penuh"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Menutup keran air rapat-rapat saat kita sedang asyik menggosok gigi.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_69", "category": "Lingkungan & Kelestarian", "difficulty": "STANDARD", "reasoning": "R3", "question": "Daripada langsung membuang toples kaca selai ke tempat sampah, seorang anak merubahnya menjadi celengan koin bening yang estetik. Memakai ulang wadah seperti ini dikenal dengan gerakan lingkungan apa?", "options": ["Reuse (Menggunakan kembali tanpa dihancurkan)", "Reduce (Mengurangi pemakaian material baru)", "Recycle (Melebur jadi barang daur ulang)", "Replace (Mengganti wadah dengan plastik)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Reuse (Menggunakan kembali tanpa dihancurkan).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_70", "category": "Lingkungan & Kelestarian", "difficulty": "STANDARD", "reasoning": "R3", "question": "Membuang jutaan sampah botol plastik minuman sembarangan ke hamparan pesisir pantai lambat laun akan merusak kualitas air laut. Organisme hidup tingkat tinggi manakah yang akan menelan racun plastik ini tanpa sadar?", "options": ["Hewan laut seperti penyu, paus, dan burung camar", "Spesies kuda nil raksasa sungai", "Serangga air tawar pegunungan", "Bakteri pengurai pasir pantai"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Hewan laut seperti penyu, paus, dan burung camar.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_71", "category": "Energi Alternatif (Air & Angin)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Pembangkit Listrik Tenaga Air (PLTA) raksasa dibangun di daerah arus sungai yang deras. Perubahan energi pokok apakah yang dihasilkan oleh putaran turbin generator bendungan ini?", "options": ["Dari energi kinetik (gerak) aliran air diubah menjadi energi listrik bersih", "Dari energi panas matahari diubah menjadi gelombang radio", "Dari energi nuklir diubah menjadi uap es", "Dari energi kimia batu bara diubah menjadi uap bensin"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Dari energi kinetik (gerak) aliran air diubah menjadi energi listrik bersih.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_72", "category": "Energi Alternatif (Air & Angin)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Kincir angin bersayap modern (aerogenerator) banyak dipasang berjejer di dataran tinggi berhembus kuat. Apakah tujuan pemerintah menanam banyak turbin angin raksasa di sana?", "options": ["Membangkitkan daya setrum listrik yang ramah lingkungan tanpa asap batu bara", "Menyedot polusi udara kota untuk dibuang ke lapisan atmosfer", "Mendinginkan cuaca panas kota saat musim kemarau panjang tiba", "Menggiling biji gandum mentah para petani menjadi tepung gandum"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Membangkitkan daya setrum listrik yang ramah lingkungan tanpa asap batu bara.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_73", "category": "Energi Alternatif (Air & Angin)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Saat kita menyalakan kipas angin di kamar, listrik dari steker mengalir dan memutar baling-baling hingga kencang. Transformasi energi apakah yang terjadi di dalam motor dinamo kipas itu?", "options": ["Energi listrik diubah secara mekanik menjadi energi gerak (kinetik)", "Energi pegas berubah menjadi energi magnet memancar", "Energi gerak berubah wujud menjadi energi cahaya terang", "Energi termal panas diubah mendadak menjadi hembusan salju"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Energi listrik diubah secara mekanik menjadi energi gerak (kinetik).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_74", "category": "Energi Alternatif (Air & Angin)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Bendungan penahan laju sungai bisa menjatuhkan ratusan ton debit air murni dalam sedetik melalui pintu pembuangannya. Ke manakah aliran deras itu dihempaskan agar berguna?", "options": ["Ke arah turbin baling-baling raksasa yang berada di bawah tanah untuk diputar kencang", "Ke area persawahan di atas bukit agar selalu terendam air subur", "Ke dalam kuali panas untuk segera direbus menjadi uap awan hujan buatan", "Ke sarang hewan buas di lembah agar pemukiman warga aman"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Ke arah turbin baling-baling raksasa yang berada di bawah tanah untuk diputar kencang.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_75", "category": "Energi Alternatif (Air & Angin)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Matahari memancarkan panas yang sangat melimpah secara gratis setiap hari. Benda berbentuk papan datar apakah yang dirakit di atas atap rumah untuk menyerap energi ini menjadi listrik?", "options": ["Panel Surya (Solar Cell / Solar Panel)", "Antena Parabola Radar", "Kincir Turbin Sayap Tiga", "Kaca Pembesar Optik"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Panel Surya (Solar Cell / Solar Panel).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_76", "category": "Botani & Adaptasi Fisik (Iksc Sains)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Bagi makhluk manusia, reaksi otomatis tubuh berupa gerakan menggigil kencang saat berada di iklim beku bersalju adalah mekanisme pintar otak. Apakah fungsi sejati dari refleks menggigil ini bagi organ di tubuh?", "options": ["Memproduksi suhu hangat internal secara mandiri lewat kontraksi gesekan otot super cepat", "Membuat hewan pemangsa lari ketakutan dengan gerakan tubuh", "Menghentikan peredaran sel darah mendadak dari hidung", "Membuang air lebih cepat dari kulit untuk menyeimbangkan berat"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Memproduksi suhu hangat internal secara mandiri lewat kontraksi gesekan otot super cepat.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_77", "category": "Botani & Adaptasi Fisik (Iksc Sains)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sebuah tanaman pot mawar sangat membutuhkan komponen nutrisi tanah dan cahaya. Namun, tanaman mawar yang ditinggalkan dalam kekeringan total seminggu penuh tanpa ditengok akan berakhir dengan kondisi fisik seperti apa?", "options": ["Layu total, kehilangan seluruh hijau daunnya yang mengerut, dan rontok kering menuju mati", "Mawar akan berakar kuat, tumbuh lebih subur menghasilkan oksigen lebat", "Tanaman berduri itu mendadak mutasi membesar menelan cahaya mentari", "Kelopak mahkotanya akan mekar lebih merah cemerlang tanpa kuncup hijau"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Layu total, kehilangan seluruh hijau daunnya yang mengerut, dan rontok kering menuju mati.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_78", "category": "Botani & Adaptasi Fisik (Iksc Sains)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Hewan ternak herbivora berbadan besar seperti sapi dan domba memiliki anatomi lambung pencernaan yang sangat kompleks dengan empat bilik berbeda. Mengapa evolusi membentuk perut hewan ini serumit itu?", "options": ["Untuk mencerna dan menghancurkan serat selulosa rumput yang tebal dan keras", "Untuk mencerna daging alot dari hewan sisa buruan serigala", "Untuk menyimpan persediaan oksigen tambahan sebelum masuk lumpur", "Untuk menampung literan susu yang siap diberikan pada petani"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Untuk mencerna dan menghancurkan serat selulosa rumput yang tebal dan keras.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_79", "category": "Botani & Adaptasi Fisik (Iksc Sains)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Hewan mamalia amfibi memiliki paru-paru kecil dan sering merayap keluar dari rawa. Bagaimanakah cara istimewa yang mereka gunakan untuk menyerap ekstra oksigen saat sedang berada lama di dasar lumpur?", "options": ["Bernapas dengan menyerap molekul oksigen terlarut melalui pori-pori kulit basah mereka", "Menghirup gelembung uap panas vulkanik yang bocor dari kawah darat", "Memakan lumut hijau lebat yang tumbuh menutupi sekujur tubuh mereka", "Memanfaatkan organ insang raksasa tersembunyi yang mekar setiap malam"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bernapas dengan menyerap molekul oksigen terlarut melalui pori-pori kulit basah mereka.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_80", "category": "Botani & Adaptasi Fisik (Iksc Sains)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sistem perasa yang mengirimkan sinyal sedap ke otak berpusat di lidah kita. Jika kamu menjulurkan lidah ke kaca, kamu akan melihat bintil-bintil merah kecil pencicip rasa. Disebut apakah bintil-bintil saraf penting ini?", "options": ["Papila lidah pencicip rasa murni", "Trakea saluran pernapasan halus", "Kelenjar parotis penghasil air liur", "Alveolus organ pertukaran kantung gas"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Papila lidah pencicip rasa murni.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_81", "category": "Pengetahuan Analitik (Literasi Campuran Iksc)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di sebuah toko buku koperasi, satu buah pensil corak Australia dijual seharga Rp 4.000. Jika kamu membayar kepada kasir dengan menyodorkan pecahan kertas Rp 10.000 bergambar bung karno, berapakah uang kembalianmu seharusnya?", "options": ["Pecahan kembalian bersih sebesar Rp 6.000 perak", "Pecahan kembalian bersih sebesar Rp 7.000 perak", "Pecahan kembalian bersih sebesar Rp 5.000 perak", "Pecahan kembalian bersih sebesar Rp 8.000 perak"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Pecahan kembalian bersih sebesar Rp 6.000 perak.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_82", "category": "Pengetahuan Analitik (Literasi Campuran Iksc)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Perhatikan sistem pola angka dari jejak lompatan kanguru ini! Jika sebuah kanguru mungil terus melompat menapak di angka 6, lalu 14, kemudian mendarat di 22. Jika ritmenya konstan tidak berubah, batu mana yang akan terinjak berikutnya?", "options": ["Batu yang ditandai dengan ukiran nomor 30 di tanah", "Batu yang ditandai dengan ukiran nomor 28 di tanah", "Batu yang ditandai dengan ukiran nomor 32 di tanah", "Batu yang ditandai dengan ukiran nomor 26 di tanah"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Batu yang ditandai dengan ukiran nomor 30 di tanah.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_83", "category": "Pengetahuan Analitik (Literasi Campuran Iksc)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Jika saat lomba atletik sains, Fandi berlari dengan ritme tinggi hingga ia tepat menyalip pelari sekolah lain yang tadinya menduduki posisi ke-6 mutlak. Alhasil, berada di peringkat perlombaan ke berapakah si Fandi saat ini berlari?", "options": ["Ia berhak menempati dan menggeser di titik posisi ke-6 itu", "Kini ia melaju mendahului jauh di posisi urutan ke-5", "Kini ia malah merosot jatuh ke posisi urutan ke-7", "Kini ia melesat tak terkejar di posisi urutan ke-4"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Ia berhak menempati dan menggeser di titik posisi ke-6 itu.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_84", "category": "Pengetahuan Analitik (Literasi Campuran Iksc)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Selembar brosur kertas sains berbentuk bujur sangkar sempurna diletakkan di meja. Jika ibu guru memotong miring lurus 2 buah sudut siku kertas tersebut dan membuang potongannya, maka tersisa berapa sudut titik nyata dari kertas itu saat ini?", "options": ["Kertas tersebut sekarang akan memiliki total 6 titik sudut pinggiran", "Kertas tersebut sekarang akan memiliki total 4 titik sudut pinggiran", "Kertas tersebut sekarang akan memiliki total 8 titik sudut pinggiran", "Kertas tersebut sekarang akan memiliki total 2 titik sudut pinggiran"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Kertas tersebut sekarang akan memiliki total 6 titik sudut pinggiran.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_85", "category": "Pengetahuan Analitik (Literasi Campuran Iksc)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sebuah jam dinding bundar besar tertempel kuat, dengan jarum pendek diam tepat di angka 5 dan jarum panjang di atas mutlak angka 12. Berapakah besaran total derajat busur sudut presisi terkecil yang terbentuk oleh persilangan arah jarum tersebut?", "options": ["Sudut tumpul terbuka selebar 150 derajat murni", "Sudut lancip melengkung sebesar 60 derajat murni", "Sudut siku siku kaku bernilai 90 derajat pas", "Sudut datar memanjang genap 180 derajat"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Sudut tumpul terbuka selebar 150 derajat murni.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_86", "category": "Kosakata Lintas Sains Iksc (Filler 1)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Di buku teks bahasa Inggris, seekor tikus kecil pemakan keju berlari cepat dilambangkan dengan diksi tunggal 'mouse'. Jika ada wabah invasi ratusan tikus liar, bagaimana gramatika jamak yang baku merujuk pada koloni hama hewan ini?", "options": ["Kelompok tikus-tikus tersebut disebut dengan ejaan (Mice)", "Kelompok tikus-tikus tersebut disebut dengan ejaan (Mouses)", "Kelompok tikus-tikus tersebut disebut dengan ejaan (Mices)", "Kelompok tikus-tikus tersebut disebut dengan ejaan (Micies)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Kelompok tikus-tikus tersebut disebut dengan ejaan (Mice).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_87", "category": "Kosakata Lintas Sains Iksc (Filler 1)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Ketika cuaca gerimis di hutan liar, beberapa tanaman jamur putih kecil mendadak bermunculan mekar dari sela batang kayu membusuk. Secara ilmiah, kelompok kerajaan makhluk hidup apakah jamur itu tergolong?", "options": ["Fungi (mereka bukanlah tumbuhan yang punya klorofil untuk memasak makanan)", "Plantae (tumbuhan berklorofil murni yang menyerap matahari)", "Animalia (binatang bersel tunggal karnivora amfibi)", "Monera (bakteri hijau lumut padat menular)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Fungi (mereka bukanlah tumbuhan yang punya klorofil untuk memasak makanan).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_88", "category": "Kosakata Lintas Sains Iksc (Filler 1)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Pada proses kimia rumah tangga, ketika satu takaran sendok kristal garam laut kotor diaduk kasar di dalam gelas air hangat, garam tersebut perlahan-lahan sirna tanpa residu. Apa nama sebutan reaksi lenyapnya padatan pada cairan jernih itu?", "options": ["Zat terlarut tersebut sukses melebur atau melarut murni dalam pelarut zat cair", "Garam tersebut menguap lenyap memuai ke udara panas kabin", "Garam berubah beku membatu dalam cairan es oksigen molekuler", "Air menghancurkan kristal itu merubahnya menjadi logam padat keras"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Zat terlarut tersebut sukses melebur atau melarut murni dalam pelarut zat cair.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_89", "category": "Kosakata Lintas Sains Iksc (Filler 1)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Setiap satwa berevolusi sangat spesifik atas kemampuan organnya. Kucing raksasa karnivora seperti Harimau Siberia sanggup membunuh rusa besar dalam hitungan detik. Di bawah ini, kemampuan mutlak manakah yang tidak dikodratkan alam pada insting si raja rimba?", "options": ["Kemampuan duduk memegang kertas untuk fasih membaca bait kalimat dongeng manusia", "Berenang melintasi muara sungai membelah arus demi berburu daging", "Memanjat dahan rendah menggunakan kukunya yang sekuat pisau lipat", "Berlari sangat pesat dari titik diam memburu satwa lalai savana"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Kemampuan duduk memegang kertas untuk fasih membaca bait kalimat dongeng manusia.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_90", "category": "Kosakata Lintas Sains Iksc (Filler 1)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Apa alasan utama logis mengapa daun-daun lebar berwarna kuning kering dan jingga kemerahan selalu rontok berguguran mengotori trotoar setiap akhir tahun tiba menjelang hari raya di kawasan sub-tropis utara benua Amerika?", "options": ["Aksi defensif (pengguguran daun) untuk menyimpan energi dan air demi hadapi suhu es", "Untuk mengganti bunganya dengan mahkota emas menyerap hujan meteorologi", "Daun sengaja dijatuhkan guna menyuapi kelaparan koloni serangga predator darat", "Proses fotosintesis terbalik memicu panas api yang membakar serat klorofil akar"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Aksi defensif (pengguguran daun) untuk menyimpan energi dan air demi hadapi suhu es.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_91", "category": "Kosakata Lintas Sains Iksc (Filler 2)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Sebuah bayangan hitam memanjang gelap menyusuri tanah luas akibat blokade cahaya. Apabila sang Matahari sore menyengat berada pas di sebelah sisi barat, menunjuk ke arah mata angin manakah jatuhnya bayangan panjang tersebut?", "options": ["Mencetak siluet lurus memanjang menunjuk berlawanan ke timur", "Bayangan condong sangat lurus maju ke kutub arah utara", "Bayangan memendek tegak jatuh di pusat pijakan lantai dasar", "Bayangan mundur jauh menyelinap ke selatan gurun pasir"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Mencetak siluet lurus memanjang menunjuk berlawanan ke timur.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_92", "category": "Kosakata Lintas Sains Iksc (Filler 2)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Pada ilmu bedah struktur geometri dasar, wujud alat makan sehari-hari kaleng susu cair dan gelas silinder kaca bening memiliki karakteristik mutlak 3 dimensi, yang mana identik mewarisi sifat dari bangun ruangan apakah ia secara visual matematika?", "options": ["Bentuk tiga dimensi ruang tabung bertutup alas melingkar", "Bangun kubus kotak presisi tinggi sejajar simetris", "Prisma segitiga runcing menjulang limas tegap", "Bola bundar pejal padat pepat elastis memantul"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bentuk tiga dimensi ruang tabung bertutup alas melingkar.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_93", "category": "Kosakata Lintas Sains Iksc (Filler 2)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Seekor burung camar putih liar mengepakkan sayap melambung tanpa suara karena menunggangi kecepatan arus udara pesisir (angin). Secara keilmuan iklim, deskripsi apakah yang mendefinisikan terciptanya tenaga dorongan angin udara ini?", "options": ["Arus gerak molekul udara kasat mata yang tergeser mengalir sebab beda panas dingin suhu", "Semburan karbon panas dari kepulan belerang gunung aktif dasar samudra raya", "Kekuatan gaya sentrifugal bulan menyeret kutub es menekan oksigen beku", "Sisa embusan napas pernapasan jutaan paus raksasa membela samudra atlantik"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Arus gerak molekul udara kasat mata yang tergeser mengalir sebab beda panas dingin suhu.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_94", "category": "Kosakata Lintas Sains Iksc (Filler 2)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Lebah madu belang memiliki organ pendeteksi di kaki dan rambut perutnya yang lengket untuk mengambil debuk kuning bunga dan memindahkannya ke pohon tetangga jauh. Apa istilah resmi untuk kebaikan lebah pada perkembangbiakan tanaman dunia ini?", "options": ["Berperan sentral sebagai perantara proses penyerbukan atau Polinator kawin serbuk bunga", "Bertugas mutlak sebagai pemangsa serangga racun ulat pemakan akar buah", "Merupakan penyumbang pestisida anti racun biologi terhebat bumi kita", "Penggali pupuk kompos ajaib tanah humusnya tanaman berbunga cerah"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Berperan sentral sebagai perantara proses penyerbukan atau Polinator kawin serbuk bunga.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_95", "category": "Kosakata Lintas Sains Iksc (Filler 2)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Benda apakah yang sangat terang namun memancarkan ilusi pantulan ketika disandarkan dekat buku? Bila kita taruh selembar abjad huruf 'p' gempal dan memandang pantulannya di cermin panjang datar, karakter alfabet cetak apakah yang justru kita baca dari ilusi dalam kaca?", "options": ["Sosok alfabet pantul tersebut 100% simetris mirip abjad (q) latin kecil", "Sebuah cetakan tebal persis seperti huruf abjad (b) latin membulat", "Sebuah garis lurus mirip tiang membentuk alfabet (l) sempit rapi", "Menjelma kurva belok patah seperti alfabet abjad kaku (m) pendek"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Sosok alfabet pantul tersebut 100% simetris mirip abjad (q) latin kecil.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_96", "category": "Kosakata Lintas Sains Iksc (Filler 3)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Dalam bahasa serapan barat pergaulan sains, ketika seekor anak kucing yang lucu digambarkan mendengkur karena kehangatan alas karpet. Pada potongan kalimat 'The cute happy kitten purred softly on the rug', dari deret vokabuler, kata manakah yang berfungsi sebagai Adjective murni?", "options": ["Kata ('Happy' & 'Cute') yang bekerja menyifati rupa atau emosi makhluk hewan itu", "Kata benda ('Kitten') figur satwa hidup tokoh peran utamanya memikat hati", "Kata kerja bising ('Purred') representasi gerak aktif dengkur laring pita suaranya", "Kata keterangan ('Softly') penjelas gaya tempo hening sunyi santai lambat"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Kata ('Happy' & 'Cute') yang bekerja menyifati rupa atau emosi makhluk hewan itu.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_97", "category": "Kosakata Lintas Sains Iksc (Filler 3)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Alat potong manual yang memiliki fungsi penjepit silang untuk membelah kertas kerajinan tangan disebut gunting dalam bahasa nusantara. Bagaimana pola ejaan huruf alfabet yang paling valid menurut kamus resmi tata bahasa Inggris Internasionalnya?", "options": ["Merangkai susunan vokal tulisan baku menjadi (S-C-I-S-S-O-R-S)", "Tersusun dari ejaan ringkas ganda berbunyi (S-C-I-S-O-R-S)", "Kombinasi acak tertulis salah huruf tengah tebal (S-I-S-S-C-O-R-S)", "Dieja padat menyambung tanpa aturan awalan (S-C-I-S-A-R-S)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Merangkai susunan vokal tulisan baku menjadi (S-C-I-S-S-O-R-S).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_98", "category": "Kosakata Lintas Sains Iksc (Filler 3)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Pada malam bertabur konstelasi langit musim gugur, ada satu tata rasi yang sangat legendaris di ufuk utara. Berdasarkan catatan manuskrip astronom angkatan laut klasik, siapakah identitas bintang malam yang menduduki predikat pancaran cahaya alam semesta paling terang jika dilihat dari lautan kita?", "options": ["Bintang Sirius terang megah dari kluster Alpha Canis Majoris di sabuk anjing pelacak", "Rasi Bintang Orion sang pemburu tangguh bertombak busur panah api perak", "Gugusan komet Halley raksasa biru pekat berekor panjang lintas galaksi bima", "Planet Venus terik benderang si Bintang Kejora palsu pelita para pengembara"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Bintang Sirius terang megah dari kluster Alpha Canis Majoris di sabuk anjing pelacak.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_99", "category": "Kosakata Lintas Sains Iksc (Filler 3)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Peti alat sekolah Tini memiliki 4 kemeja warna terang dan 4 celana panjang jins modis bersih. Melalui pengoperasian cabang matematika dasar peluang (kombinasi), ada berapa setelan total variasi baju dan celana itu bisa dipadu-padankan dalam acara pertunjukan bakat siang hari nanti?", "options": ["Mencapai batas perpaduan murni total sebanyak 16 set pasangan modis berbeda", "Sanggup menyentuh batas murni kemungkinan total 8 kombinasi gaya keren berbeda", "Angka pencapaian bervariasi ganda menyentuh 32 kombinasi wujud busana", "Batas matematis mentok terhenti di angka 12 campuran kombinasi selang seling"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Mencapai batas perpaduan murni total sebanyak 16 set pasangan modis berbeda.", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}, {"id": "si_iksc_100_v3_100", "category": "Kosakata Lintas Sains Iksc (Filler 3)", "difficulty": "STANDARD", "reasoning": "R3", "question": "Mesin ini menyatu dicolok langsung bersama unit menara komputer dan berbunyi bising ketika menelan selembar kertas putih bersih dan mengeluarkannya berisi tulisan grafik tebal bertinta dari berkas data ketikan dokumen sekolah. Mesin perakitan mekanis perangkat eksternal tersebut resmi dinamakan sebagai apa?", "options": ["Hardware penduplikat cetak mekanik yang resmi diakui sebagai unit (Printer Dokumentasi)", "Panel ketik empuk pemencet huruf abjad digital penghasil data ketik murni (Keyboard)", "Pemindai cahaya inframerah pelacak tulisan kertas fisik mentah menembus (Scanner)", "Layar kaca proyektor pancaran warna beresolusi definisi super tajam menawan (Monitor)"], "correct": 0, "explanation": "Jawaban yang tepat adalah: Hardware penduplikat cetak mekanik yang resmi diakui sebagai unit (Printer Dokumentasi).", "hint": "Gunakan nalar literasi ceritamu dan fakta sains dasar."}], "english_iklc": [], "english_osi": [], "english_ef": []};
 
+        // HELPER FUNGSI
         const shuffleArray = (array) => {
             let newArr = [...array];
             for (let i = newArr.length - 1; i > 0; i--) {
@@ -1671,16 +58,24 @@
             return newArr;
         };
 
+        const formatDate = (isoString) => {
+            const date = new Date(isoString);
+            return date.toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        };
+
+        // GENERATOR KUIS DENGAN LOGIKA SESI IKSC (20x5)
         const generateDynamicQuiz = (subjectKey, studentName) => {
             const historyKey = `used_qs_${studentName}_${subjectKey}`;
             let usedIds = JSON.parse(localStorage.getItem(historyKey) || "[]");
             const namesM = ["Andi", "Budi", "Dodi", "Edo", "Fandi", "Rafa", "Vano", "Dion"];
             const namesF = ["Ria", "Siti", "Nala", "Lina", "Tini", "Dina", "Amara", "Vega"];
-            const fruitsID = ["apel", "jeruk", "mangga", "pisang", "stroberi"];
-            const fruitsEN = ["apples", "oranges", "mangoes", "bananas", "grapes"];
             
-            let rawPool = dbQuestions[subjectKey] || dbQuestions.science_iksc;
-            
+            let rawPool = dbQuestions[subjectKey] || [];
+            if(rawPool.length === 0) return [];
+
             let uniquePool = [];
             let seenQuestions = new Set();
             for (let q of rawPool) {
@@ -1696,20 +91,17 @@
             let takeCount = subjectKey.includes('iksc') ? 20 : 25;
             
             if (availableQuestions.length >= takeCount) {
-                // Sesi Terstruktur: Ambil soal per indeks untuk memastikan kunci jawaban BEDA semua
+                // LOGIKA ADAPTIF IKSC KHUSUS
                 if (subjectKey === "science_iksc" && uniquePool.length === 100) {
                      let sessionIndex = Math.floor(usedIds.length / 20);
-                     if (sessionIndex >= 5) sessionIndex = 0; // fallback jika bug
+                     if (sessionIndex >= 5) sessionIndex = 0; // fallback bug
                      
-                     selectedRaw = [];
                      for (let i = 0; i < 20; i++) {
-                          // Ambil soal ke-(sessionIndex) dari tiap grup 5
                           let indexToPick = (i * 5) + sessionIndex;
                           if (indexToPick < uniquePool.length) {
                               selectedRaw.push(uniquePool[indexToPick]);
                           }
                      }
-                     // Acak agar urutan tema di UI tidak selalu sama tiap sesi
                      selectedRaw = shuffleArray(selectedRaw);
                 } else {
                      selectedRaw = shuffleArray(availableQuestions).slice(0, takeCount);
@@ -1718,7 +110,7 @@
                 let newUsedIds = [...usedIds, ...selectedRaw.map(q => q.id)];
                 localStorage.setItem(historyKey, JSON.stringify(newUsedIds));
             } else {
-                // RESET SESI (Semua soal sudah dimainkan)
+                // RESET JIKA HABIS 100 SOAL
                 let remainingFresh = shuffleArray(availableQuestions);
                 let neededCount = takeCount - remainingFresh.length;
                 let freshIds = new Set(remainingFresh.map(q => q.id));
@@ -1737,12 +129,10 @@
                 let replaceText = (text) => {
                     if(!text) return text;
                     return text.replace(/Andi/g, namesM[v]).replace(/Budi/g, namesM[(v+1)%8])
-                               .replace(/Ria/g, namesF[v]).replace(/Nala/g, namesF[(v+1)%8])
-                               .replace(/apples/g, fruitsEN[v%5]).replace(/apel/g, fruitsID[v%5]);
+                               .replace(/Ria/g, namesF[v]).replace(/Nala/g, namesF[(v+1)%8]);
                 };
                 newQ.question = replaceText(newQ.question);
                 if(newQ.explanation) newQ.explanation = replaceText(newQ.explanation);
-                if(newQ.hint) newQ.hint = replaceText(newQ.hint);
                 
                 let optsWithIndex = newQ.options.map((opt, idx) => ({ text: replaceText(opt), originalIndex: idx }));
                 optsWithIndex = shuffleArray(optsWithIndex);
@@ -1756,6 +146,7 @@
             return finalQuestions;
         };
 
+        // KOMPONEN SCRATCHPAD 
         const Scratchpad = ({ isOpen, onClose }) => {
             const canvasRef = useRef(null);
             const headerRef = useRef(null);
@@ -1849,6 +240,7 @@
             );
         };
 
+        // KOMPONEN UTAMA KUIS (Mesin Soal)
         const QuizEngine = ({ studentName, subject, onComplete, onExit }) => {
             const [questions, setQuestions] = useState([]);
             const [currentIdx, setCurrentIdx] = useState(0);
@@ -1892,7 +284,7 @@
                 });
 
                 const total = questions.length;
-                const score = Math.round((correctCount / total) * 100);
+                const score = total > 0 ? Math.round((correctCount / total) * 100) : 0;
 
                 setResults({ total, correct: correctCount, wrong: wrongCount, blank: blankCount, score });
                 setIsFinished(true);
@@ -1916,20 +308,22 @@
 
             if (questions.length === 0) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center">
+                    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50">
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
+                        <p className="text-slate-500 font-medium">Wah, soalnya belum tersedia nih. Nanti di-update ya!</p>
+                        <button onClick={onExit} className="px-6 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl mt-4">Kembali</button>
                     </div>
                 );
             }
 
             if (isFinished) {
                 return (
-                    <div className="min-h-screen flex flex-col items-center justify-center p-6 fade-in">
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50 fade-in">
                         <div className="bg-white p-10 rounded-[2rem] shadow-xl w-full max-w-lg text-center border-2 border-slate-100 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
                             
-                            <div className="mb-6 inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 text-indigo-600 text-4xl mb-6 shadow-inner">
-                                {results.score >= 80 ? '🌟' : results.score >= 60 ? '👍' : '💪'}
+                            <div className="mb-6 inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 text-indigo-600 text-4xl shadow-inner transform rotate-12">
+                                {results.score >= 80 ? '🚀' : results.score >= 60 ? '👍' : '💪'}
                             </div>
 
                             <h2 className="text-3xl font-display font-bold text-slate-800 mb-2">Misi Selesai, {studentName}!</h2>
@@ -1950,7 +344,7 @@
                             
                             <div className="flex gap-4">
                                 <button onClick={onExit} className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-                                    Kembali
+                                    Kembali ke Dashboard
                                 </button>
                                 <button onClick={() => window.location.reload()} className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5">
                                     Main Lagi
@@ -1966,7 +360,6 @@
 
             return (
                 <div className="min-h-screen flex flex-col bg-slate-50">
-                    {/* Header Bar */}
                     <div className="bg-white px-6 py-4 border-b border-slate-200 sticky top-0 z-20 shadow-sm flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <button onClick={onExit} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
@@ -1978,7 +371,6 @@
                             </div>
                         </div>
                         
-                        {/* Progress Bar Mini */}
                         <div className="hidden md:flex flex-1 max-w-md mx-8 items-center gap-3">
                             <div className="h-2 flex-1 bg-slate-100 rounded-full overflow-hidden">
                                 <div 
@@ -2004,10 +396,7 @@
 
                     <Scratchpad isOpen={isScratchpadOpen} onClose={() => setScratchpadOpen(false)} />
 
-                    {/* Main Content Area */}
                     <div className="flex-1 flex flex-col items-center w-full max-w-3xl mx-auto px-4 py-8 slide-up">
-                        
-                        {/* Question Card */}
                         <div className="w-full bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 relative">
                             <div className="absolute top-0 left-0 w-1 bg-indigo-500 h-full"></div>
                             <div className="p-6 md:p-8">
@@ -2027,7 +416,6 @@
                             </div>
                         </div>
 
-                        {/* Options */}
                         <div className="w-full grid gap-3 mb-8">
                             {q.options.map((opt, idx) => {
                                 const isSelected = answers[currentIdx] === idx;
@@ -2060,11 +448,22 @@
                             })}
                         </div>
 
+                        {/* Hint Box (Moved ABOVE navigation) */}
+                        {showHint && (
+                            <div className="w-full mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 slide-up">
+                                <i className="fa-solid fa-circle-info text-amber-500 mt-1"></i>
+                                <p className="text-amber-800 text-sm font-medium leading-relaxed">{q.hint}</p>
+                            </div>
+                        )}
+
                         {/* Bottom Navigation */}
                         <div className="w-full flex items-center justify-between gap-4 mt-auto">
                             <div className="flex gap-2">
                                 <button 
-                                    onClick={() => setCurrentIdx(p => Math.max(0, p - 1))}
+                                    onClick={() => {
+                                        setShowHint(false);
+                                        setCurrentIdx(p => Math.max(0, p - 1));
+                                    }}
                                     disabled={currentIdx === 0}
                                     className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all active:scale-95"
                                 >
@@ -2082,7 +481,6 @@
                                 )}
                             </div>
 
-                            {/* Center Actions */}
                             <div className="flex gap-2">
                                 <button 
                                     onClick={() => setShowHint(!showHint)}
@@ -2096,6 +494,7 @@
 
                             <button 
                                 onClick={() => {
+                                    setShowHint(false);
                                     if (currentIdx === questions.length - 1) finishQuiz();
                                     else setCurrentIdx(p => p + 1);
                                 }}
@@ -2108,47 +507,59 @@
                                 {currentIdx !== questions.length - 1 && <i className="fa-solid fa-arrow-right"></i>}
                             </button>
                         </div>
-
-                        {/* Hint Box (Floating above nav) */}
-                        {showHint && (
-                            <div className="w-full mt-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 slide-up">
-                                <i className="fa-solid fa-circle-info text-amber-500 mt-1"></i>
-                                <p className="text-amber-800 text-sm font-medium leading-relaxed">{q.hint}</p>
-                            </div>
-                        )}
-                        
                     </div>
                 </div>
             );
         };
 
         // ==========================================
-        // APP COMPONENT (Dashboard & Routing)
+        // APP COMPONENT (Dashboard Lengkap dengan Activity Log & Bento)
         // ==========================================
         const App = () => {
             const [activeSubject, setActiveSubject] = useState(null);
             const [studentName, setStudentName] = useState("");
             const [nameInput, setNameInput] = useState("");
+            const [historyLogs, setHistoryLogs] = useState([]);
 
             useEffect(() => {
                 const savedName = localStorage.getItem("student_name");
                 if (savedName) {
                     setStudentName(savedName);
                     setNameInput(savedName);
+                    fetchHistory(savedName);
                 }
             }, []);
+
+            const fetchHistory = async (name) => {
+                try {
+                    const { data, error } = await supabase
+                        .from('quiz_history')
+                        .select('*')
+                        .eq('student_name', name)
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+                    
+                    if (error) throw error;
+                    if (data) setHistoryLogs(data);
+                } catch (err) {
+                    console.error("Gagal mengambil history:", err);
+                }
+            };
 
             const saveName = (e) => {
                 e.preventDefault();
                 if (nameInput.trim()) {
-                    setStudentName(nameInput.trim());
-                    localStorage.setItem("student_name", nameInput.trim());
+                    const newName = nameInput.trim();
+                    setStudentName(newName);
+                    localStorage.setItem("student_name", newName);
+                    fetchHistory(newName);
                 }
             };
 
             const logout = () => {
                 setStudentName("");
                 setNameInput("");
+                setHistoryLogs([]);
                 localStorage.removeItem("student_name");
             };
 
@@ -2157,7 +568,10 @@
                     <QuizEngine 
                         studentName={studentName}
                         subject={activeSubject} 
-                        onExit={() => setActiveSubject(null)} 
+                        onExit={() => {
+                            setActiveSubject(null);
+                            fetchHistory(studentName); 
+                        }} 
                     />
                 );
             }
@@ -2191,23 +605,23 @@
             }
 
             const subjects = [
-                { id: 'math_kmnr', title: 'Math KMNR', icon: 'fa-calculator', color: 'from-blue-400 to-blue-600', count: dbQuestions.math_kmnr ? dbQuestions.math_kmnr.length : 0 },
-                { id: 'math_numerik', title: 'Math Numerik', icon: 'fa-cubes', color: 'from-emerald-400 to-emerald-600', count: dbQuestions.math_numerik ? dbQuestions.math_numerik.length : 0 },
-                { id: 'math_spasial', title: 'Math Spasial', icon: 'fa-shapes', color: 'from-amber-400 to-orange-500', count: dbQuestions.math_spasial ? dbQuestions.math_spasial.length : 0 },
-                { id: 'science_ksnr', title: 'Science KSNR', icon: 'fa-flask', color: 'from-purple-400 to-purple-600', count: dbQuestions.science_ksnr ? dbQuestions.science_ksnr.length : 0 },
-                { id: 'science_iksc', title: 'Science IKSC', icon: 'fa-microscope', color: 'from-pink-400 to-rose-500', count: dbQuestions.science_iksc ? dbQuestions.science_iksc.length : 0 },
-                { id: 'english_iklc', title: 'English IKLC', icon: 'fa-book-open', color: 'from-cyan-400 to-cyan-600', count: dbQuestions.english_iklc ? dbQuestions.english_iklc.length : 0 },
-                { id: 'english_osi', title: 'English OSI', icon: 'fa-language', color: 'from-indigo-400 to-indigo-600', count: dbQuestions.english_osi ? dbQuestions.english_osi.length : 0 },
-                { id: 'english_ef', title: 'English EF', icon: 'fa-spell-check', color: 'from-teal-400 to-teal-600', count: dbQuestions.english_ef ? dbQuestions.english_ef.length : 0 }
+                { id: 'math_kmnr', title: 'Math KMNR', icon: 'fa-calculator', color: 'from-blue-400 to-blue-600', count: dbQuestions.math_kmnr.length },
+                { id: 'math_numerik', title: 'Math Numerik', icon: 'fa-cubes', color: 'from-emerald-400 to-emerald-600', count: dbQuestions.math_numerik.length },
+                { id: 'math_spasial', title: 'Math Spasial', icon: 'fa-shapes', color: 'from-amber-400 to-orange-500', count: dbQuestions.math_spasial.length },
+                { id: 'science_ksnr', title: 'Science KSNR', icon: 'fa-flask', color: 'from-purple-400 to-purple-600', count: dbQuestions.science_ksnr.length },
+                { id: 'science_iksc', title: 'Science IKSC', icon: 'fa-microscope', color: 'from-pink-400 to-rose-500', count: dbQuestions.science_iksc.length },
+                { id: 'english_iklc', title: 'English IKLC', icon: 'fa-book-open', color: 'from-cyan-400 to-cyan-600', count: dbQuestions.english_iklc.length },
+                { id: 'english_osi', title: 'English OSI', icon: 'fa-language', color: 'from-indigo-400 to-indigo-600', count: dbQuestions.english_osi.length },
+                { id: 'english_ef', title: 'English EF', icon: 'fa-spell-check', color: 'from-teal-400 to-teal-600', count: dbQuestions.english_ef.length }
             ];
 
             return (
                 <div className="min-h-screen bg-slate-50 pb-20">
-                    <div className="bg-slate-900 text-white rounded-b-[3rem] px-6 pt-12 pb-16 shadow-xl relative overflow-hidden">
+                    <div className="bg-slate-900 text-white rounded-b-[3rem] px-6 pt-12 pb-24 shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
                         <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-500 opacity-20 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
                         
-                        <div className="max-w-4xl mx-auto relative z-10 flex justify-between items-start">
+                        <div className="max-w-6xl mx-auto relative z-10 flex justify-between items-start">
                             <div>
                                 <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">Halo, {studentName}! 👋</h1>
                                 <p className="text-slate-400 font-medium">Pilih misi belajarmu hari ini</p>
@@ -2218,32 +632,75 @@
                         </div>
                     </div>
 
-                    <div className="max-w-4xl mx-auto px-6 -mt-8 relative z-20">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-                            {subjects.map(sub => (
-                                <button
-                                    key={sub.id}
-                                    onClick={() => setActiveSubject(sub.id)}
-                                    className="bento-card group text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] relative overflow-hidden"
-                                >
-                                    <div className="flex justify-between items-start mb-6 relative z-10">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${sub.color} text-white shadow-lg group-hover:scale-110 transition-transform`}>
-                                            <i className={`fa-solid ${sub.icon} text-xl`}></i>
+                    <div className="max-w-6xl mx-auto px-6 -mt-12 relative z-20">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            
+                            {/* Area Utama: Bento Card Subjek */}
+                            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                {subjects.map(sub => (
+                                    <button
+                                        key={sub.id}
+                                        onClick={() => setActiveSubject(sub.id)}
+                                        className="bento-card group text-left transition-all duration-300 relative overflow-hidden flex flex-col"
+                                    >
+                                        <div className="flex justify-between items-start mb-6 relative z-10">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${sub.color} text-white shadow-lg group-hover:scale-110 transition-transform`}>
+                                                <i className={`fa-solid ${sub.icon} text-xl`}></i>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-colors">
+                                                <i className="fa-solid fa-play text-xs ml-0.5"></i>
+                                            </div>
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-colors">
-                                            <i className="fa-solid fa-play text-xs ml-0.5"></i>
+                                        <div className="relative z-10 mt-auto">
+                                            <h3 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-indigo-600 transition-colors">{sub.title}</h3>
+                                            <p className="text-sm text-slate-500 font-medium">{sub.count} Bank Soal Tersedia</p>
                                         </div>
-                                    </div>
-                                    <div className="relative z-10">
-                                        <h3 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-indigo-600 transition-colors">{sub.title}</h3>
-                                        <p className="text-sm text-slate-500 font-medium">{sub.count} Misi Tersedia</p>
-                                    </div>
-                                    
-                                    <div className="absolute -bottom-4 -right-4 text-slate-50 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity transform group-hover:scale-110">
-                                        <i className={`fa-solid ${sub.icon} text-9xl`}></i>
-                                    </div>
-                                </button>
-                            ))}
+                                        
+                                        <div className="absolute -bottom-4 -right-4 text-slate-50 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity transform group-hover:scale-110">
+                                            <i className={`fa-solid ${sub.icon} text-9xl`}></i>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Sidebar: Activity Log */}
+                            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] h-fit flex flex-col">
+                                <h2 className="font-display font-bold text-xl text-slate-800 mb-6 flex items-center gap-3">
+                                    <i className="fa-solid fa-chart-line text-indigo-500"></i>
+                                    Aktivitas Terakhir
+                                </h2>
+                                
+                                <div className="space-y-4">
+                                    {historyLogs.length === 0 ? (
+                                        <div className="text-center py-8 text-slate-400">
+                                            <i className="fa-solid fa-ghost text-4xl mb-3 opacity-20"></i>
+                                            <p className="text-sm font-medium">Belum ada riwayat kuis.</p>
+                                        </div>
+                                    ) : (
+                                        historyLogs.map((log, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-100 hover:bg-indigo-50/50 transition-colors">
+                                                <div>
+                                                    <p className="font-bold text-slate-700 text-sm mb-1 uppercase tracking-wide">
+                                                        {log.subject.replace('_', ' ')}
+                                                    </p>
+                                                    <p className="text-xs text-slate-400 font-medium">
+                                                        {formatDate(log.created_at)}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right flex flex-col items-end">
+                                                    <span className={`font-black text-lg ${log.score >= 80 ? 'text-green-500' : log.score >= 60 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                        {log.score}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                                        Skor
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
